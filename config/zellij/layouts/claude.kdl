@@ -1,0 +1,14 @@
+layout {
+    pane split_direction="vertical" size="70%" {
+        pane command="bash" {
+            args "-lc" "/home/bz/.local/bin/claude || true; exec bash -li"
+        }
+        pane split_direction="horizontal" {
+            pane
+            pane
+        }
+    }
+    pane size=1 borderless=true {
+        plugin location="compact-bar"
+    }
+}

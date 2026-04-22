@@ -1,0 +1,22 @@
+default_layout "compact"
+default_mode "locked"
+scroll_buffer_size 50000
+copy_on_select true
+session_serialization true
+theme "codex_warm"
+
+themes {
+    codex_warm {
+        bg 29 32 33
+        fg 235 219 178
+        black 40 40 40
+        red 204 36 29
+        green 152 151 26
+        yellow 215 153 33
+        blue 104 157 106
+        magenta 177 98 134
+        orange 254 128 25
+        cyan 142 192 124
+        white 213 196 161
+    }
+}
