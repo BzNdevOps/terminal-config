@@ -4,5 +4,5 @@ set -euo pipefail
 if [ -n "${ZELLIJ:-}" ]; then
     exec zellij action new-tab --layout codex --name codex
 else
-    exec zellij -s codex -l codex
+    /home/bz/bin/zellij attach codex || exec /home/bz/bin/zellij --session codex --new-session-with-layout codex
 fi

@@ -1,11 +1,13 @@
-layout {
-    pane split_direction="vertical" size="70%" {
-        pane command="bash" {
-            args "-lc" "/home/bz/.local/bin/claude || true; exec bash -li"
+layout cwd="/home/bz" {
+    pane split_direction="vertical" size="72%" {
+        pane name="claude" command="bash" {
+            args "-lc" "cd /home/bz; /home/bz/.local/bin/claude || true; exec bash -li"
         }
         pane split_direction="horizontal" {
-            pane
-            pane
+            pane name="shell"
+            pane name="git" command="bash" {
+                args "-lc" "while true; do clear; git status --short --branch 2>/dev/null || true; printf '\\n'; date; sleep 10; done"
+            }
         }
     }
     pane size=1 borderless=true {

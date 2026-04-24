@@ -1,22 +1,23 @@
-default_layout "compact"
+default_layout "ai"
 default_mode "locked"
 scroll_buffer_size 50000
 copy_on_select true
 session_serialization true
-theme "codex_warm"
+pane_frames true
+theme "ai_gruvbox"
 
 themes {
-    codex_warm {
-        bg 29 32 33
+    ai_gruvbox {
+        bg 40 40 40
         fg 235 219 178
-        black 40 40 40
+        black 60 56 54
         red 204 36 29
         green 152 151 26
         yellow 215 153 33
-        blue 104 157 106
+        blue 69 133 136
         magenta 177 98 134
-        orange 254 128 25
-        cyan 142 192 124
-        white 213 196 161
+        orange 175 58 3
+        cyan 104 157 106
+        white 235 219 178
     }
 }

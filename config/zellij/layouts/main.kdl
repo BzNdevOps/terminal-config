@@ -1,0 +1,35 @@
+layout {
+    tab name="codex" focus=true cwd="/home/bz" {
+        pane split_direction="vertical" size="70%" {
+            pane name="codex" command="bash" {
+                args "-lc" "cd /home/bz; /home/bz/.npm-global/bin/codex || true; exec bash -li"
+            }
+            pane split_direction="horizontal" {
+                pane name="shell"
+                pane name="git" command="bash" {
+                    args "-lc" "while true; do clear; git status --short --branch 2>/dev/null || true; printf '\\n'; date; sleep 10; done"
+                }
+            }
+        }
+        pane size=1 borderless=true {
+            plugin location="compact-bar"
+        }
+    }
+
+    tab name="claude" cwd="/home/bz" {
+        pane split_direction="vertical" size="70%" {
+            pane name="claude" command="bash" {
+                args "-lc" "cd /home/bz; /home/bz/.local/bin/claude || true; exec bash -li"
+            }
+            pane split_direction="horizontal" {
+                pane name="shell"
+                pane name="git" command="bash" {
+                    args "-lc" "while true; do clear; git status --short --branch 2>/dev/null || true; printf '\\n'; date; sleep 10; done"
+                }
+            }
+        }
+        pane size=1 borderless=true {
+            plugin location="compact-bar"
+        }
+    }
+}

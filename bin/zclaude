@@ -4,5 +4,5 @@ set -euo pipefail
 if [ -n "${ZELLIJ:-}" ]; then
     exec zellij action new-tab --layout claude --name claude
 else
-    exec zellij -s claude -l claude
+    /home/bz/bin/zellij attach claude || exec /home/bz/bin/zellij --session claude --new-session-with-layout claude
 fi

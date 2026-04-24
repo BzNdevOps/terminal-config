@@ -1,5 +1,17 @@
 local wezterm = require 'wezterm'
 local act = wezterm.action
+local mux = wezterm.mux
+
+local home = wezterm.home_dir
+local zellij = home .. '/bin/zellij'
+local ai_cmd = zellij .. ' attach ai || ' .. zellij .. ' --session ai --new-session-with-layout ai || exec bash -li'
+local codex_cmd = zellij .. ' attach codex || ' .. zellij .. ' --session codex --new-session-with-layout codex || exec bash -li'
+local claude_cmd = zellij .. ' attach claude || ' .. zellij .. ' --session claude --new-session-with-layout claude || exec bash -li'
+
+wezterm.on('gui-startup', function(cmd)
+  local tab, pane, window = mux.spawn_window(cmd or {})
+  window:gui_window():toggle_fullscreen()
+end)
 
 local function paste_latest_screenshot(window, pane)
   local success, stdout, stderr = wezterm.run_child_process {
@@ -23,16 +35,24 @@ local function paste_latest_screenshot(window, pane)
 end
 
 return {
-  color_scheme = 'Gruvbox Dark',
+  default_cwd = home,
   colors = {
+    foreground = '#ebdbb2',
+    background = '#282828',
+    cursor_bg = '#ebdbb2',
+    cursor_fg = '#282828',
+    cursor_border = '#ebdbb2',
+    selection_fg = '#282828',
+    selection_bg = '#d5c4a1',
     scrollbar_thumb = '#504945',
     split = '#3c3836',
+    ansi = { '#282828', '#cc241d', '#98971a', '#d79921', '#458588', '#b16286', '#689d6a', '#a89984' },
+    brights = { '#928374', '#fb4934', '#b8bb26', '#fabd2f', '#83a598', '#d3869b', '#8ec07c', '#ebdbb2' },
   },
   font_size = 13.0,
   line_height = 1.08,
   initial_cols = 100,
   initial_rows = 28,
-  window_startup_state = 'Maximized',
   enable_tab_bar = false,
   use_fancy_tab_bar = false,
   hide_tab_bar_if_only_one_tab = true,
@@ -46,12 +66,31 @@ return {
     bottom = 6,
   },
   set_environment_variables = {
+    COLORTERM = 'truecolor',
     CLAUDE_CODE_NO_FLICKER = '1',
+    CLAUDE_CODE_DISABLE_TERMINAL_TITLE = '1',
   },
   scrollback_lines = 100000,
-  default_prog = { 'bash', '-lc', 'zellij attach -c main' },
+  default_prog = { 'bash', '-lc', ai_cmd },
+  launch_menu = {
+    {
+      label = 'AI cockpit',
+      args = { 'bash', '-lc', ai_cmd },
+    },
+    {
+      label = 'Codex only',
+      args = { 'bash', '-lc', codex_cmd },
+    },
+    {
+      label = 'Claude only',
+      args = { 'bash', '-lc', claude_cmd },
+    },
+  },
   keys = {
     { key = 'v', mods = 'ALT|SHIFT', action = wezterm.action_callback(paste_latest_screenshot) },
+    { key = 'F9', mods = 'CTRL|SHIFT', action = act.SpawnCommandInNewWindow { args = { 'bash', '-lc', ai_cmd } } },
+    { key = 'F10', mods = 'CTRL|SHIFT', action = act.SpawnCommandInNewWindow { args = { 'bash', '-lc', codex_cmd } } },
+    { key = 'F11', mods = 'CTRL|SHIFT', action = act.SpawnCommandInNewWindow { args = { 'bash', '-lc', claude_cmd } } },
     { key = 'PageUp', mods = 'CTRL|SHIFT', action = act.ScrollByPage(-1) },
     { key = 'PageDown', mods = 'CTRL|SHIFT', action = act.ScrollByPage(1) },
     { key = 'UpArrow', mods = 'CTRL|SHIFT', action = act.ScrollByLine(-3) },
