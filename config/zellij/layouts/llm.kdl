@@ -1,0 +1,23 @@
+layout cwd="/home/bz" {
+    pane split_direction="vertical" size="50%" {
+        pane split_direction="horizontal" {
+            pane name="gpu" command="bash" {
+                args "-lc" "/home/bz/bin/bzserv-llm-monitor gpu; exec bash -li"
+            }
+            pane name="services" command="bash" {
+                args "-lc" "/home/bz/bin/bzserv-llm-monitor status; exec bash -li"
+            }
+        }
+        pane split_direction="horizontal" {
+            pane name="real traffic PG/TG" command="bash" {
+                args "-lc" "/home/bz/bin/bzserv-llm-monitor traffic; exec bash -li"
+            }
+            pane name="open-webui logs" command="bash" {
+                args "-lc" "/home/bz/bin/bzserv-llm-monitor webui-logs; exec bash -li"
+            }
+        }
+    }
+    pane size=1 borderless=true {
+        plugin location="compact-bar"
+    }
+}

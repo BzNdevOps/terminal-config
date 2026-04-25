@@ -2,7 +2,7 @@ layout {
     tab name="codex" focus=true cwd="/home/bz" {
         pane split_direction="vertical" size="70%" {
             pane name="codex" command="bash" {
-                args "-lc" "cd /home/bz; /home/bz/.npm-global/bin/codex || true; exec bash -li"
+                args "-lc" "cd /home/bz; /home/bz/.npm-global/bin/codex -c 'tui.theme=\"gruvbox-light\"' || true; exec bash -li"
             }
             pane split_direction="horizontal" {
                 pane name="shell"

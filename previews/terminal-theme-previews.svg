@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="980" viewBox="0 0 1440 980">
+  <title>WezTerm + Zellij Theme Preview: Night, Sunset, Light Day</title>
+  <desc>Three terminal color templates selected for WezTerm and Zellij: Catppuccin Mocha Night, Gruvbox Sunset, and Gruvbox Light Day.</desc>
+  <style>
+    text { font-family: "JetBrains Mono", "Fira Code", "DejaVu Sans Mono", monospace; }
+    .title { font: 700 34px "Inter", "DejaVu Sans", sans-serif; fill: #2d2a24; }
+    .subtitle { font: 16px "Inter", "DejaVu Sans", sans-serif; fill: #665c54; }
+    .card-title { font: 700 25px "Inter", "DejaVu Sans", sans-serif; }
+    .meta { font: 14px "Inter", "DejaVu Sans", sans-serif; opacity: .82; }
+    .terminal { font-size: 17px; }
+    .small { font-size: 13px; }
+    .chip-label { font-size: 12px; font-weight: 700; }
+  </style>
+
+  <rect width="1440" height="980" fill="#f7efe1"/>
+  <text x="70" y="68" class="title">WezTerm + Zellij Color Templates</text>
+  <text x="70" y="98" class="subtitle">Three practical palettes: a calm night theme, a warm sunset theme, and a readable light day theme.</text>
+
+  <!-- Night card -->
+  <g transform="translate(70 140)">
+    <rect width="1300" height="230" rx="14" fill="#11111b"/>
+    <text x="34" y="48" class="card-title" fill="#cdd6f4">1. Night: Catppuccin Mocha</text>
+    <text x="34" y="76" class="meta" fill="#a6adc8">Soft dark, widely supported, low glare for long sessions.</text>
+
+    <rect x="34" y="104" width="720" height="92" rx="8" fill="#1e1e2e" stroke="#45475a"/>
+    <text x="56" y="136" class="terminal" fill="#a6e3a1">$ zellij attach ai</text>
+    <text x="56" y="164" class="terminal" fill="#cdd6f4">codex: inspect config, run tests, prepare patch</text>
+    <rect x="56" y="174" width="324" height="20" fill="#45475a"/>
+    <text x="56" y="190" class="terminal" fill="#f5e0dc">selected text stays visible</text>
+
+    <g transform="translate(790 106)">
+      <rect width="58" height="58" rx="8" fill="#1e1e2e" stroke="#585b70"/>
+      <rect x="72" width="58" height="58" rx="8" fill="#cdd6f4"/>
+      <rect x="144" width="58" height="58" rx="8" fill="#89b4fa"/>
+      <rect x="216" width="58" height="58" rx="8" fill="#a6e3a1"/>
+      <rect x="288" width="58" height="58" rx="8" fill="#f9e2af"/>
+      <rect x="360" width="58" height="58" rx="8" fill="#f38ba8"/>
+      <text x="0" y="84" class="chip-label" fill="#cdd6f4">bg</text>
+      <text x="72" y="84" class="chip-label" fill="#cdd6f4">fg</text>
+      <text x="144" y="84" class="chip-label" fill="#cdd6f4">blue</text>
+      <text x="216" y="84" class="chip-label" fill="#cdd6f4">green</text>
+      <text x="288" y="84" class="chip-label" fill="#cdd6f4">yellow</text>
+      <text x="360" y="84" class="chip-label" fill="#cdd6f4">red</text>
+    </g>
+  </g>
+
+  <!-- Sunset card -->
+  <g transform="translate(70 410)">
+    <rect width="1300" height="230" rx="14" fill="#3c3836"/>
+    <text x="34" y="48" class="card-title" fill="#fabd2f">2. Sunset: Gruvbox Warm</text>
+    <text x="34" y="76" class="meta" fill="#d5c4a1">Warm amber/orange, less blue, good contrast for evening work.</text>
+
+    <rect x="34" y="104" width="720" height="92" rx="8" fill="#282828" stroke="#665c54"/>
+    <text x="56" y="136" class="terminal" fill="#b8bb26">$ git status --short</text>
+    <text x="56" y="164" class="terminal" fill="#ebdbb2">M  config/wezterm/wezterm.lua</text>
+    <rect x="56" y="174" width="324" height="20" fill="#fabd2f"/>
+    <text x="56" y="190" class="terminal" fill="#1d2021">selected text stays visible</text>
+
+    <g transform="translate(790 106)">
+      <rect width="58" height="58" rx="8" fill="#282828" stroke="#665c54"/>
+      <rect x="72" width="58" height="58" rx="8" fill="#ebdbb2"/>
+      <rect x="144" width="58" height="58" rx="8" fill="#d79921"/>
+      <rect x="216" width="58" height="58" rx="8" fill="#b8bb26"/>
+      <rect x="288" width="58" height="58" rx="8" fill="#fe8019"/>
+      <rect x="360" width="58" height="58" rx="8" fill="#fb4934"/>
+      <text x="0" y="84" class="chip-label" fill="#ebdbb2">bg</text>
+      <text x="72" y="84" class="chip-label" fill="#ebdbb2">fg</text>
+      <text x="144" y="84" class="chip-label" fill="#ebdbb2">amber</text>
+      <text x="216" y="84" class="chip-label" fill="#ebdbb2">green</text>
+      <text x="288" y="84" class="chip-label" fill="#ebdbb2">orange</text>
+      <text x="360" y="84" class="chip-label" fill="#ebdbb2">red</text>
+    </g>
+  </g>
+
+  <!-- Light card -->
+  <g transform="translate(70 680)">
+    <rect width="1300" height="230" rx="14" fill="#f2e5bc"/>
+    <text x="34" y="48" class="card-title" fill="#3c3836">3. Light Day: Gruvbox Light</text>
+    <text x="34" y="76" class="meta" fill="#665c54">Readable in daylight, warm paper background, high-contrast selection.</text>
+
+    <rect x="34" y="104" width="720" height="92" rx="8" fill="#fbf1c7" stroke="#d5c4a1"/>
+    <text x="56" y="136" class="terminal" fill="#79740e">$ codex resume --last</text>
+    <text x="56" y="164" class="terminal" fill="#3c3836">typing remains dark and readable on light background</text>
+    <rect x="56" y="174" width="324" height="20" fill="#fabd2f"/>
+    <text x="56" y="190" class="terminal" fill="#1d2021">selected text stays visible</text>
+
+    <g transform="translate(790 106)">
+      <rect width="58" height="58" rx="8" fill="#fbf1c7" stroke="#d5c4a1"/>
+      <rect x="72" width="58" height="58" rx="8" fill="#3c3836"/>
+      <rect x="144" width="58" height="58" rx="8" fill="#076678"/>
+      <rect x="216" width="58" height="58" rx="8" fill="#79740e"/>
+      <rect x="288" width="58" height="58" rx="8" fill="#b57614"/>
+      <rect x="360" width="58" height="58" rx="8" fill="#9d0006"/>
+      <text x="0" y="84" class="chip-label" fill="#3c3836">bg</text>
+      <text x="72" y="84" class="chip-label" fill="#3c3836">fg</text>
+      <text x="144" y="84" class="chip-label" fill="#3c3836">blue</text>
+      <text x="216" y="84" class="chip-label" fill="#3c3836">green</text>
+      <text x="288" y="84" class="chip-label" fill="#3c3836">yellow</text>
+      <text x="360" y="84" class="chip-label" fill="#3c3836">red</text>
+    </g>
+  </g>
+
+  <text x="70" y="944" class="subtitle">Recommended order: Light Day for your current setup, Gruvbox Warm for sunset/evening, Catppuccin Mocha for night.</text>
+</svg>

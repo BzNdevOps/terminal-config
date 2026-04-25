@@ -1,0 +1,298 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+target="${BZSERV_SSH_HOST:-bzserv}"
+mode="${1:-status}"
+
+ssh_cmd() {
+    ssh -o BatchMode=yes -o ConnectTimeout=5 "$target" "$@"
+}
+
+case "$mode" in
+    gpu)
+        while true; do
+            printf '\033c'
+            ssh_cmd 'sudo -n python3 - <<'"'"'PY'"'"'
+import subprocess
+import time
+
+RESET = "\033[0m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+GREEN = "\033[38;5;82m"
+YELLOW = "\033[38;5;220m"
+RED = "\033[38;5;196m"
+CYAN = "\033[38;5;45m"
+MAGENTA = "\033[38;5;207m"
+
+def dot(value, warn, crit):
+    if value >= crit:
+        return f"{RED}●{RESET}"
+    if value >= warn:
+        return f"{YELLOW}●{RESET}"
+    return f"{GREEN}●{RESET}"
+
+out = subprocess.check_output([
+    "nvidia-smi",
+    "--query-gpu=name,utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw,power.limit",
+    "--format=csv,noheader,nounits",
+], text=True).strip()
+
+name, util, mem_used, mem_total, temp, power, power_limit = [x.strip() for x in out.split(",")]
+util = float(util)
+mem_used = float(mem_used)
+mem_total = float(mem_total)
+mem_pct = 100 * mem_used / mem_total if mem_total else 0
+temp = float(temp)
+power = float(power)
+power_limit = float(power_limit) if power_limit else 0
+power_pct = 100 * power / power_limit if power_limit else 0
+
+print(f"{BOLD}{MAGENTA}◉ GPU / VRAM{RESET}  {DIM}{time.strftime('%Y-%m-%d %H:%M:%S')}{RESET}")
+print()
+print(f"{CYAN}{name}{RESET}")
+print(f"{dot(util, 70, 90)} GPU util   {util:6.1f}%")
+print(f"{dot(mem_pct, 75, 90)} VRAM       {mem_used:6.0f}/{mem_total:.0f} MB  {mem_pct:5.1f}%")
+print(f"{dot(temp, 70, 82)} GPU temp   {temp:6.1f} C")
+print(f"{dot(power_pct, 70, 90)} Power      {power:6.1f} W  {power_pct:5.1f}%")
+
+try:
+    ps = subprocess.check_output(["nvidia-smi", "--query-compute-apps=process_name,used_memory", "--format=csv,noheader,nounits"], text=True).strip()
+except subprocess.CalledProcessError:
+    ps = ""
+
+print()
+print(f"{BOLD}Processes{RESET}")
+if ps:
+    for line in ps.splitlines()[:6]:
+        print(f"{GREEN}◆{RESET} {line}")
+else:
+    print(f"{DIM}no active compute process listed{RESET}")
+PY'
+            sleep 5
+        done
+        ;;
+    status)
+        while true; do
+            printf '\033c'
+            ssh_cmd 'python3 - <<'"'"'PY'"'"'
+import glob
+import subprocess
+import time
+
+RESET = "\033[0m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+GREEN = "\033[38;5;82m"
+YELLOW = "\033[38;5;220m"
+RED = "\033[38;5;196m"
+BLUE = "\033[38;5;45m"
+ORANGE = "\033[38;5;208m"
+
+def dot(value, warn, crit, reverse=False):
+    if reverse:
+        if value <= crit:
+            return f"{RED}●{RESET}"
+        if value <= warn:
+            return f"{YELLOW}●{RESET}"
+        return f"{GREEN}●{RESET}"
+    if value >= crit:
+        return f"{RED}●{RESET}"
+    if value >= warn:
+        return f"{YELLOW}●{RESET}"
+    return f"{GREEN}●{RESET}"
+
+def service_line(name):
+    try:
+        state = subprocess.check_output(["systemctl", "is-active", name], text=True).strip()
+    except subprocess.CalledProcessError:
+        state = "inactive"
+    color = GREEN if state == "active" else RED
+    symbol = "●" if state == "active" else "●"
+    print(f"{color}{symbol}{RESET} {name:<12} {state}")
+
+def read_cpu():
+    with open("/proc/stat", "r", encoding="utf-8") as f:
+        parts = [int(x) for x in f.readline().split()[1:]]
+    idle = parts[3] + parts[4]
+    total = sum(parts)
+    return idle, total
+
+idle1, total1 = read_cpu()
+time.sleep(0.4)
+idle2, total2 = read_cpu()
+total_delta = total2 - total1
+idle_delta = idle2 - idle1
+cpu_pct = 100 * (1 - idle_delta / total_delta) if total_delta else 0
+
+mem = {}
+with open("/proc/meminfo", "r", encoding="utf-8") as f:
+    for line in f:
+        key, value = line.split(":", 1)
+        mem[key] = int(value.strip().split()[0])
+mem_total = mem.get("MemTotal", 0)
+mem_available = mem.get("MemAvailable", 0)
+ram_pct = 100 * (1 - mem_available / mem_total) if mem_total else 0
+
+temps = []
+for path in glob.glob("/sys/class/thermal/thermal_zone*/temp"):
+    try:
+        raw = int(open(path, "r", encoding="utf-8").read().strip())
+    except Exception:
+        continue
+    if raw:
+        temps.append(raw / 1000)
+temp_text = f"{max(temps):.1f} C" if temps else "n/a"
+
+print(f"{BOLD}{BLUE}◉ System / Services{RESET}  {DIM}{time.strftime('%Y-%m-%d %H:%M:%S')}{RESET}")
+print()
+print(f"{dot(cpu_pct, 70, 90)} CPU used   {cpu_pct:6.1f}%")
+print(f"{dot(ram_pct, 75, 90)} RAM used   {ram_pct:6.1f}%")
+if temp_text == "n/a":
+    print(f"{DIM}● CPU temp   n/a{RESET}")
+else:
+    temp = float(temp_text.split()[0])
+    print(f"{dot(temp, 70, 85)} CPU temp   {temp_text}")
+print()
+print(f"{BOLD}Services{RESET}")
+for svc in ["ollama", "open-webui", "nginx", "netdata", "tailscaled"]:
+    service_line(svc)
+PY' || true
+            echo
+            echo -e "\033[1mContainers\033[0m"
+            ssh_cmd 'sudo -n podman ps --format "{{.Names}}\t{{.Status}}\t{{.Image}}" | python3 -c '"'"'import sys
+RESET="\033[0m"; GREEN="\033[38;5;82m"; YELLOW="\033[38;5;220m"; RED="\033[38;5;196m"
+for line in sys.stdin:
+    name,status,image=line.rstrip("\n").split("\t",2)
+    color=GREEN if status.startswith("Up") else RED
+    print(f"{color}◆{RESET} {name:<12} {status:<18} {image.split("@")[0]}")
+'"'"'' || true
+            echo
+            echo -e "\033[1mHTTP checks\033[0m"
+            ssh_cmd 'python3 - <<'"'"'PY'"'"'
+import urllib.request
+
+RESET = "\033[0m"
+GREEN = "\033[38;5;82m"
+RED = "\033[38;5;196m"
+YELLOW = "\033[38;5;220m"
+
+checks = [
+    ("open-webui nginx", "http://127.0.0.1:3000/"),
+    ("netdata tailscale", "http://100.64.144.126:19999/"),
+]
+for name, url in checks:
+    try:
+        with urllib.request.urlopen(url, timeout=2) as r:
+            code = r.status
+    except Exception:
+        code = 0
+    color = GREEN if 200 <= code < 400 else YELLOW if code else RED
+    print(f"{color}●{RESET} {name:<17} {code:>3}")
+PY' || true
+            sleep 15
+        done
+        ;;
+    traffic)
+        while true; do
+            printf '\033c'
+            ssh_cmd 'sudo -n python3 - <<'"'"'PY'"'"'
+import json
+import sqlite3
+import time
+
+RESET = "\033[0m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+GREEN = "\033[38;5;82m"
+YELLOW = "\033[38;5;220m"
+RED = "\033[38;5;196m"
+MAGENTA = "\033[38;5;207m"
+
+def dot(value, warn_low, warn_high=None):
+    if warn_high is not None and value >= warn_high:
+        return f"{GREEN}●{RESET}"
+    if value >= warn_low:
+        return f"{YELLOW}●{RESET}"
+    return f"{RED}●{RESET}"
+
+db = "/var/lib/containers/storage/volumes/open-webui-data/_data/webui.db"
+now = int(time.time())
+windows = [("1h", now - 3600), ("24h", now - 86400), ("all", 0)]
+con = sqlite3.connect(db)
+cur = con.cursor()
+
+def load_rows(since):
+    rows = []
+    for model, raw_usage, created_at in cur.execute(
+        """
+        select model_id, usage, created_at
+        from chat_message
+        where role = ?
+          and usage is not null
+          and created_at >= ?
+        order by created_at desc
+        """,
+        ("assistant", since),
+    ):
+        try:
+            usage = json.loads(raw_usage)
+        except Exception:
+            continue
+        if not isinstance(usage, dict):
+            continue
+        if not usage.get("prompt_eval_count") or not usage.get("eval_count"):
+            continue
+        rows.append((model or "unknown", usage, created_at))
+    return rows
+
+print(f"{BOLD}{MAGENTA}◉ Real Open WebUI PG/TG{RESET}  {DIM}{time.strftime('%Y-%m-%d %H:%M:%S')}{RESET}")
+print()
+print("Window  Req  PG avg tok/s  TG avg tok/s  Prompt tok  Output tok")
+print("------  ---  ------------  ------------  ----------  ----------")
+
+for label, since in windows:
+    rows = load_rows(since)
+    prompt_tokens = sum(float(u.get("prompt_eval_count") or 0) for _, u, _ in rows)
+    output_tokens = sum(float(u.get("eval_count") or 0) for _, u, _ in rows)
+    prompt_ns = sum(float(u.get("prompt_eval_duration") or 0) for _, u, _ in rows)
+    output_ns = sum(float(u.get("eval_duration") or 0) for _, u, _ in rows)
+    pg = prompt_tokens / (prompt_ns / 1_000_000_000) if prompt_ns else 0
+    tg = output_tokens / (output_ns / 1_000_000_000) if output_ns else 0
+    tg_icon = dot(tg, 20, 35)
+    pg_icon = dot(pg, 100, 400)
+    print(f"{label:>6}  {len(rows):>3}  {pg_icon} {pg:>10.2f}  {tg_icon} {tg:>10.2f}  {int(prompt_tokens):>10}  {int(output_tokens):>10}")
+
+rows = load_rows(0)
+print()
+if rows:
+    print(f"{BOLD}Latest responses{RESET}")
+    print("Time                 Model          PG tok/s  TG tok/s  In tok  Out tok")
+    print("-------------------  ------------  --------  --------  ------  -------")
+    for model, u, created_at in rows[:8]:
+        pg = float(u.get("prompt_token/s") or 0)
+        tg = float(u.get("response_token/s") or 0)
+        ts = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(created_at or 0)))
+        in_tokens = int(u.get("prompt_eval_count") or 0)
+        out_tokens = int(u.get("eval_count") or 0)
+        print(f"{ts}  {model[:12]:<12}  {pg:>8.2f}  {tg:>8.2f}  {in_tokens:>6}  {out_tokens:>7}")
+else:
+    print("No completed Open WebUI/Ollama usage records found.")
+PY' || true
+            sleep 30
+        done
+        ;;
+    webui-logs)
+        exec ssh -t "$target" 'sudo -n podman logs --tail 80 -f open-webui 2>&1'
+        ;;
+    ollama-logs)
+        exec ssh -t "$target" 'sudo -n podman logs --tail 80 -f ollama 2>&1'
+        ;;
+    whisper-logs)
+        exec ssh -t "$target" 'sudo -n podman logs --tail 80 -f whisper 2>&1'
+        ;;
+    *)
+        echo "Usage: bzserv-llm-monitor {gpu|status|traffic|webui-logs|ollama-logs|whisper-logs}" >&2
+        exit 2
+        ;;
+esac

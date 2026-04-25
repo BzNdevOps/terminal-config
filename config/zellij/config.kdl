@@ -4,20 +4,20 @@ scroll_buffer_size 50000
 copy_on_select true
 session_serialization true
 pane_frames true
-theme "ai_gruvbox"
+theme "ai_gruvbox_day"
 
 themes {
-    ai_gruvbox {
-        bg 40 40 40
-        fg 235 219 178
-        black 60 56 54
+    ai_gruvbox_day {
+        bg 251 241 199
+        fg 60 56 54
+        black 251 241 199
         red 204 36 29
         green 152 151 26
         yellow 215 153 33
-        blue 69 133 136
-        magenta 177 98 134
+        blue 216 233 234
+        magenta 234 217 228
         orange 175 58 3
-        cyan 104 157 106
-        white 235 219 178
+        cyan 220 232 215
+        white 60 56 54
     }
 }

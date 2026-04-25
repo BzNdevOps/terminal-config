@@ -1,0 +1,168 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+target="${BZSERV_SSH_HOST:-bzserv}"
+mode="${1:-overview}"
+
+ssh_cmd() {
+    ssh -o BatchMode=yes -o ConnectTimeout=5 "$target" "$@"
+}
+
+case "$mode" in
+    overview)
+        while true; do
+            printf '\033c'
+            ssh_cmd 'sudo -n python3 - <<'"'"'PY'"'"'
+import json
+import subprocess
+import time
+
+RESET = "\033[0m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+GREEN = "\033[38;5;82m"
+YELLOW = "\033[38;5;220m"
+RED = "\033[38;5;196m"
+CYAN = "\033[38;5;45m"
+
+def active(name):
+    try:
+        return subprocess.check_output(["systemctl", "is-active", name], text=True).strip()
+    except subprocess.CalledProcessError:
+        return "inactive"
+
+def line(name, state, warn=False):
+    color = GREEN if state == "active" and not warn else YELLOW if warn else RED
+    print(f"{color}●{RESET} {name:<18} {state}")
+
+print(f"{BOLD}{CYAN}◉ Security / Access{RESET}  {DIM}{time.strftime('%Y-%m-%d %H:%M:%S')}{RESET}")
+print()
+for svc in ["ufw", "fail2ban", "auditd", "unattended-upgrades", "tailscaled", "ssh"]:
+    line(svc, active(svc))
+
+try:
+    jail_status = subprocess.check_output(["fail2ban-client", "status", "sshd"], text=True, stderr=subprocess.DEVNULL)
+except Exception:
+    jail_status = ""
+banned = "0"
+failed = "0"
+for row in jail_status.splitlines():
+    if "Currently banned:" in row:
+        banned = row.split(":", 1)[1].strip()
+    if "Currently failed:" in row:
+        failed = row.split(":", 1)[1].strip()
+print()
+print(f"{GREEN if banned == "0" else RED}●{RESET} fail2ban banned   {banned}")
+print(f"{GREEN if failed == "0" else YELLOW}●{RESET} ssh failed now    {failed}")
+
+try:
+    ufw = subprocess.check_output(["ufw", "status"], text=True, stderr=subprocess.DEVNULL)
+    ufw_active = "Status: active" in ufw
+except Exception:
+    ufw_active = False
+print(f"{GREEN if ufw_active else RED}●{RESET} ufw active        {str(ufw_active).lower()}")
+
+try:
+    ts = subprocess.check_output(["tailscale", "status", "--json"], text=True, stderr=subprocess.DEVNULL)
+    ts_ok = json.loads(ts).get("BackendState") == "Running"
+except Exception:
+    ts_ok = False
+print(f"{GREEN if ts_ok else RED}●{RESET} tailscale online  {str(ts_ok).lower()}")
+PY' || true
+            sleep 60
+        done
+        ;;
+    surface)
+        while true; do
+            printf '\033c'
+            ssh_cmd 'sudo -n python3 - <<'"'"'PY'"'"'
+import subprocess
+import time
+
+RESET = "\033[0m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+GREEN = "\033[38;5;82m"
+YELLOW = "\033[38;5;220m"
+RED = "\033[38;5;196m"
+MAGENTA = "\033[38;5;207m"
+
+print(f"{BOLD}{MAGENTA}◉ Attack Surface{RESET}  {DIM}{time.strftime('%Y-%m-%d %H:%M:%S')}{RESET}")
+print()
+out = subprocess.check_output(["ss", "-tulpen"], text=True, stderr=subprocess.DEVNULL)
+rows = []
+for line in out.splitlines()[1:]:
+    parts = line.split()
+    if len(parts) < 5:
+        continue
+    proto = parts[0]
+    local = parts[4]
+    proc = line.split("users:(", 1)[1].split(")", 1)[0] if "users:(" in line else "-"
+    rows.append((proto, local, proc))
+
+interesting = []
+for proto, local, proc in rows:
+    if any(p in local for p in [":22", ":443", ":3000", ":7788", ":11434", ":19999", ":8080"]):
+        interesting.append((proto, local, proc))
+
+for proto, local, proc in interesting[:18]:
+    public = ("0.0.0.0:" in local or "[::]:" in local)
+    tailscale = "100.64." in local or "fd7a:" in local
+    color = YELLOW if public and ":22" in local else GREEN if tailscale or "127.0.0.1" in local else YELLOW
+    print(f"{color}◆{RESET} {proto:<4} {local:<28} {proc[:32]}")
+
+print()
+checks = [
+    ("SSH public bind", any(":22" in local and ("0.0.0.0:" in local or "[::]:" in local) for _, local, _ in interesting)),
+    ("Ollama public", any(":11434" in local and ("0.0.0.0:" in local or "[::]:" in local) for _, local, _ in interesting)),
+    ("Netdata tailscale", any(":19999" in local and "100.64." in local for _, local, _ in interesting)),
+]
+for name, value in checks:
+    warn = name == "SSH public bind" and value
+    color = YELLOW if warn else GREEN if value or name == "Ollama public" else RED
+    text = "yes" if value else "no"
+    print(f"{color}●{RESET} {name:<18} {text}")
+PY' || true
+            sleep 120
+        done
+        ;;
+    auth)
+        while true; do
+            printf '\033c'
+            ssh_cmd 'sudo -n python3 - <<'"'"'PY'"'"'
+import subprocess
+import time
+
+RESET = "\033[0m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+GREEN = "\033[38;5;82m"
+YELLOW = "\033[38;5;220m"
+RED = "\033[38;5;196m"
+ORANGE = "\033[38;5;208m"
+
+print(f"{BOLD}{ORANGE}◉ SSH / Auth Events{RESET}  {DIM}{time.strftime('%Y-%m-%d %H:%M:%S')}{RESET}")
+print()
+cmd = ["journalctl", "_COMM=sshd", "--since", "24 hours ago", "--no-pager"]
+out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL)
+failed = [l for l in out.splitlines() if any(s in l.lower() for s in ["failed", "invalid", "authentication failure"])]
+accepted = [l for l in out.splitlines() if "Accepted " in l]
+print(f"{GREEN if not failed else RED}●{RESET} failed 24h      {len(failed)}")
+print(f"{GREEN}●{RESET} accepted 24h    {len(accepted)}")
+print()
+print(f"{BOLD}Recent events{RESET}")
+for line in (failed[-8:] + accepted[-6:])[-12:]:
+    color = RED if any(s in line.lower() for s in ["failed", "invalid", "authentication failure"]) else GREEN
+    print(f"{color}◆{RESET} {line[:110]}")
+PY' || true
+            sleep 120
+        done
+        ;;
+    firewall)
+        exec ssh -t "$target" 'sudo -n ufw status numbered; echo; sudo -n fail2ban-client status sshd 2>/dev/null || true; exec bash -li'
+        ;;
+    *)
+        echo "Usage: bzserv-security-monitor {overview|surface|auth|firewall}" >&2
+        exit 2
+        ;;
+esac
