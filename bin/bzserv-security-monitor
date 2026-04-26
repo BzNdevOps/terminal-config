@@ -209,7 +209,8 @@ try:
             print(f"{color}● {stripped}{RESET}")
         elif "Banned IP list" in line:
             ips = line.split(":", 1)[-1].strip()
-            print(f"{RED}● Banned IPs: {ips if ips else 'none'}{RESET}")
+            no_bans = "none"
+            print(f"{RED}● Banned IPs: {ips if ips else no_bans}{RESET}")
         else:
             print(f"{DIM}{stripped}{RESET}")
 except Exception as e:
