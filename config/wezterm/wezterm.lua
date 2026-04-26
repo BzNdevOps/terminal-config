@@ -42,7 +42,7 @@ return {
     cursor_fg = '#fbf1c7',
     cursor_border = '#3c3836',
     selection_fg = '#1d2021',
-    selection_bg = '#fabd2f',
+    selection_bg = '#fe8019',
     scrollbar_thumb = '#d5c4a1',
     split = '#d5c4a1',
     ansi = { '#fbf1c7', '#cc241d', '#98971a', '#d79921', '#458588', '#b16286', '#689d6a', '#d5c4a1' },
