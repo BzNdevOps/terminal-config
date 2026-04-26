@@ -15,6 +15,7 @@ Personal terminal setup centered on `WezTerm + Zellij`, with an optional `tmux` 
 - `config/zellij/layouts/sec.kdl`: bzserv security and attack-surface tab layout
 - `bin/bzserv-llm-monitor`: SSH-based GPU, service, and logs monitor for bzserv
 - `bin/bzserv-security-monitor`: SSH-based security and attack-surface monitor for bzserv
+- `bin/terminal-theme`: apply terminal templates across WezTerm, Zellij, and Codex together
 - `config/tmux/tmux.conf`: tmux config
 - `previews/terminal-theme-previews.png`: visual comparison of the three recommended terminal palettes
 - `previews/terminal-theme-night.svg`: Night template preview based on Catppuccin Mocha
@@ -42,6 +43,27 @@ Personal terminal setup centered on `WezTerm + Zellij`, with an optional `tmux` 
 - `Alt+Shift+v` pastes the path of the latest screenshot from `~/Pictures/Screenshots`
 - `zcodex` opens a Codex tab/layout when inside Zellij, or starts a dedicated Codex session otherwise
 - `zclaude` does the same for Claude
+
+## Theme Switching
+
+Use `terminal-theme` when changing templates. It updates all layers that affect readability:
+
+- WezTerm window colors
+- Zellij theme and layouts
+- Codex TUI theme
+- Active Codex pane foreground/background, when a Zellij session is running
+
+Apply the light day template:
+
+```bash
+terminal-theme light
+```
+
+If an already-running Codex process still has a cached dark input box, restart that Codex pane:
+
+```bash
+codex resume --last -c 'tui.theme="gruvbox-light"'
+```
 
 ## Theme Previews
 
@@ -75,10 +97,11 @@ cp config/zellij/layouts/help.kdl ~/.config/zellij/layouts/help.kdl
 cp config/zellij/layouts/llm.kdl ~/.config/zellij/layouts/llm.kdl
 cp config/zellij/layouts/main.kdl ~/.config/zellij/layouts/main.kdl
 cp config/tmux/tmux.conf ~/.tmux.conf
+cp bin/terminal-theme ~/bin/terminal-theme
 cp bin/zcodex ~/bin/zcodex
 cp bin/zclaude ~/bin/zclaude
 cp bin/zj ~/bin/zj
-chmod +x ~/bin/zcodex ~/bin/zclaude ~/bin/zj
+chmod +x ~/bin/terminal-theme ~/bin/zcodex ~/bin/zclaude ~/bin/zj
 ```
 
 Make sure `~/bin` is in `PATH`.
