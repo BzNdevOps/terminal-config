@@ -162,7 +162,61 @@ PY' || true
         done
         ;;
     firewall)
-        exec ssh -t "$target" 'sudo -n ufw status numbered; echo; sudo -n fail2ban-client status sshd 2>/dev/null || true; exec bash -li'
+        while true; do
+            printf '\033c'
+            ssh_cmd 'sudo -n python3 - <<'"'"'PY'"'"'
+import subprocess
+import time
+
+RESET = "\033[0m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+GREEN = "\033[38;5;82m"
+YELLOW = "\033[38;5;220m"
+RED = "\033[38;5;196m"
+
+ts = time.strftime("%Y-%m-%d %H:%M:%S")
+print(f"{BOLD}{RED}◉ Firewall / Fail2ban{RESET}  {DIM}{ts}{RESET}")
+print()
+
+try:
+    ufw = subprocess.check_output(["ufw", "status", "numbered"], text=True, stderr=subprocess.DEVNULL)
+    for line in ufw.splitlines()[:24]:
+        if "ALLOW" in line:
+            print(f"{GREEN}{line}{RESET}")
+        elif "DENY" in line or "REJECT" in line:
+            print(f"{RED}{line}{RESET}")
+        else:
+            print(f"{DIM}{line}{RESET}")
+except Exception as e:
+    print(f"{RED}● ufw error: {e}{RESET}")
+
+print()
+
+try:
+    f2b = subprocess.check_output(["fail2ban-client", "status", "sshd"], text=True, stderr=subprocess.DEVNULL)
+    for line in f2b.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if "Currently banned" in line:
+            count = line.split(":", 1)[-1].strip()
+            color = RED if count != "0" else GREEN
+            print(f"{color}● {stripped}{RESET}")
+        elif "Currently failed" in line:
+            count = line.split(":", 1)[-1].strip()
+            color = YELLOW if count != "0" else GREEN
+            print(f"{color}● {stripped}{RESET}")
+        elif "Banned IP list" in line:
+            ips = line.split(":", 1)[-1].strip()
+            print(f"{RED}● Banned IPs: {ips if ips else 'none'}{RESET}")
+        else:
+            print(f"{DIM}{stripped}{RESET}")
+except Exception as e:
+    print(f"{RED}● fail2ban error: {e}{RESET}")
+PY' || true
+            sleep 60
+        done
         ;;
     *)
         echo "Usage: bzserv-security-monitor {overview|surface|auth|firewall}" >&2
