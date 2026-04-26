@@ -35,7 +35,7 @@ def line(name, state, warn=False):
     color = GREEN if state == "active" and not warn else YELLOW if warn else RED
     print(f"{color}●{RESET} {name:<18} {state}")
 
-print(f"{BOLD}{CYAN}◉ Security / Access{RESET}  {DIM}{time.strftime('%Y-%m-%d %H:%M:%S')}{RESET}")
+print(f"{BOLD}{CYAN}◉ Security / Access{RESET}  {DIM}{time.strftime("%Y-%m-%d %H:%M:%S")}{RESET}")
 print()
 for svc in ["ufw", "fail2ban", "auditd", "unattended-upgrades", "tailscaled", "ssh"]:
     line(svc, active(svc))
@@ -89,7 +89,7 @@ YELLOW = "\033[38;5;220m"
 RED = "\033[38;5;196m"
 MAGENTA = "\033[38;5;207m"
 
-print(f"{BOLD}{MAGENTA}◉ Attack Surface{RESET}  {DIM}{time.strftime('%Y-%m-%d %H:%M:%S')}{RESET}")
+print(f"{BOLD}{MAGENTA}◉ Attack Surface{RESET}  {DIM}{time.strftime("%Y-%m-%d %H:%M:%S")}{RESET}")
 print()
 out = subprocess.check_output(["ss", "-tulpen"], text=True, stderr=subprocess.DEVNULL)
 rows = []
@@ -144,7 +144,7 @@ YELLOW = "\033[38;5;220m"
 RED = "\033[38;5;196m"
 ORANGE = "\033[38;5;208m"
 
-print(f"{BOLD}{ORANGE}◉ SSH / Auth Events{RESET}  {DIM}{time.strftime('%Y-%m-%d %H:%M:%S')}{RESET}")
+print(f"{BOLD}{ORANGE}◉ SSH / Auth Events{RESET}  {DIM}{time.strftime("%Y-%m-%d %H:%M:%S")}{RESET}")
 print()
 cmd = ["journalctl", "_COMM=sshd", "--since", "24 hours ago", "--no-pager"]
 out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL)

@@ -48,7 +48,7 @@ power = float(power)
 power_limit = float(power_limit) if power_limit else 0
 power_pct = 100 * power / power_limit if power_limit else 0
 
-print(f"{BOLD}{MAGENTA}◉ GPU / VRAM{RESET}  {DIM}{time.strftime('%Y-%m-%d %H:%M:%S')}{RESET}")
+print(f"{BOLD}{MAGENTA}◉ GPU / VRAM{RESET}  {DIM}{time.strftime("%Y-%m-%d %H:%M:%S")}{RESET}")
 print()
 print(f"{CYAN}{name}{RESET}")
 print(f"{dot(util, 70, 90)} GPU util   {util:6.1f}%")
@@ -144,7 +144,7 @@ for path in glob.glob("/sys/class/thermal/thermal_zone*/temp"):
         temps.append(raw / 1000)
 temp_text = f"{max(temps):.1f} C" if temps else "n/a"
 
-print(f"{BOLD}{BLUE}◉ System / Services{RESET}  {DIM}{time.strftime('%Y-%m-%d %H:%M:%S')}{RESET}")
+print(f"{BOLD}{BLUE}◉ System / Services{RESET}  {DIM}{time.strftime("%Y-%m-%d %H:%M:%S")}{RESET}")
 print()
 print(f"{dot(cpu_pct, 70, 90)} CPU used   {cpu_pct:6.1f}%")
 print(f"{dot(ram_pct, 75, 90)} RAM used   {ram_pct:6.1f}%")
@@ -247,7 +247,7 @@ def load_rows(since):
         rows.append((model or "unknown", usage, created_at))
     return rows
 
-print(f"{BOLD}{MAGENTA}◉ Real Open WebUI PG/TG{RESET}  {DIM}{time.strftime('%Y-%m-%d %H:%M:%S')}{RESET}")
+print(f"{BOLD}{MAGENTA}◉ Real Open WebUI PG/TG{RESET}  {DIM}{time.strftime("%Y-%m-%d %H:%M:%S")}{RESET}")
 print()
 print("Window  Req  PG avg tok/s  TG avg tok/s  Prompt tok  Output tok")
 print("------  ---  ------------  ------------  ----------  ----------")
