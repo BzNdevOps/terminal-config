@@ -103,28 +103,28 @@ for line in out.splitlines()[1:]:
     rows.append((proto, local, proc))
 
 WATCHED_PORTS = {"22", "443", "3000", "7788", "11434", "19999", "8080"}
-interesting = []
+EXPECTED_PUBLIC = {"22", "443"}
+
+issues = []
 for proto, local, proc in rows:
-    if local.rsplit(":", 1)[-1] in WATCHED_PORTS:
-        interesting.append((proto, local, proc))
+    port = local.rsplit(":", 1)[-1]
+    if port not in WATCHED_PORTS:
+        continue
+    public = "0.0.0.0:" in local or "[::]:" in local
+    if not public:
+        continue
+    if port == "22":
+        issues.append((YELLOW, proto, local, proc, "SSH public"))
+    elif port not in EXPECTED_PUBLIC:
+        issues.append((RED, proto, local, proc, "unexpected public exposure"))
+    else:
+        issues.append((YELLOW, proto, local, proc, "public"))
 
-for proto, local, proc in interesting[:18]:
-    public = ("0.0.0.0:" in local or "[::]:" in local)
-    tailscale = "100.64." in local or "fd7a:" in local
-    color = YELLOW if public and ":22" in local else GREEN if tailscale or "127.0.0.1" in local else YELLOW
-    print(f"{color}◆{RESET} {proto:<4} {local:<28} {proc[:32]}")
-
-print()
-checks = [
-    ("SSH public bind", any(":22" in local and ("0.0.0.0:" in local or "[::]:" in local) for _, local, _ in interesting)),
-    ("Ollama public", any(":11434" in local and ("0.0.0.0:" in local or "[::]:" in local) for _, local, _ in interesting)),
-    ("Netdata tailscale", any(":19999" in local and "100.64." in local for _, local, _ in interesting)),
-]
-for name, value in checks:
-    warn = name == "SSH public bind" and value
-    color = YELLOW if warn else GREEN if value or name == "Ollama public" else RED
-    text = "yes" if value else "no"
-    print(f"{color}●{RESET} {name:<18} {text}")
+if issues:
+    for color, proto, local, proc, reason in issues:
+        print(f"{color}◆{RESET} {proto:<4} {local:<28} {proc[:28]}  {DIM}({reason}){RESET}")
+else:
+    print(f"{GREEN}● No unexpected public exposures{RESET}")
 PY' || true
             sleep 120
         done
@@ -179,42 +179,46 @@ ts = time.strftime("%Y-%m-%d %H:%M:%S")
 print(f"{BOLD}{RED}◉ Firewall / Fail2ban{RESET}  {DIM}{ts}{RESET}")
 print()
 
-try:
-    ufw = subprocess.check_output(["ufw", "status", "numbered"], text=True, stderr=subprocess.DEVNULL)
-    for line in ufw.splitlines()[:24]:
-        if "ALLOW" in line:
-            print(f"{GREEN}{line}{RESET}")
-        elif "DENY" in line or "REJECT" in line:
-            print(f"{RED}{line}{RESET}")
-        else:
-            print(f"{DIM}{line}{RESET}")
-except Exception as e:
-    print(f"{RED}● ufw error: {e}{RESET}")
+issues = []
 
-print()
+try:
+    ufw_out = subprocess.check_output(["ufw", "status"], text=True, stderr=subprocess.DEVNULL)
+    if "Status: inactive" in ufw_out:
+        issues.append(f"{RED}● UFW INACTIVE — firewall is OFF{RESET}")
+except Exception as e:
+    issues.append(f"{RED}● ufw error: {e}{RESET}")
+
+try:
+    state = subprocess.check_output(["systemctl", "is-active", "fail2ban"], text=True).strip()
+    if state != "active":
+        issues.append(f"{RED}● fail2ban service {state}{RESET}")
+except Exception:
+    issues.append(f"{RED}● fail2ban service unknown{RESET}")
 
 try:
     f2b = subprocess.check_output(["fail2ban-client", "status", "sshd"], text=True, stderr=subprocess.DEVNULL)
+    banned = "0"
+    failed = "0"
+    banned_ips = ""
     for line in f2b.splitlines():
-        stripped = line.strip()
-        if not stripped:
-            continue
-        if "Currently banned" in line:
-            count = line.split(":", 1)[-1].strip()
-            color = RED if count != "0" else GREEN
-            print(f"{color}● {stripped}{RESET}")
-        elif "Currently failed" in line:
-            count = line.split(":", 1)[-1].strip()
-            color = YELLOW if count != "0" else GREEN
-            print(f"{color}● {stripped}{RESET}")
-        elif "Banned IP list" in line:
-            ips = line.split(":", 1)[-1].strip()
-            no_bans = "none"
-            print(f"{RED}● Banned IPs: {ips if ips else no_bans}{RESET}")
-        else:
-            print(f"{DIM}{stripped}{RESET}")
+        if "Currently banned:" in line:
+            banned = line.split(":", 1)[-1].strip()
+        if "Currently failed:" in line:
+            failed = line.split(":", 1)[-1].strip()
+        if "Banned IP list:" in line:
+            banned_ips = line.split(":", 1)[-1].strip()
+    if banned != "0":
+        issues.append(f"{RED}● fail2ban: {banned} banned — {banned_ips}{RESET}")
+    if failed != "0":
+        issues.append(f"{YELLOW}● fail2ban: {failed} currently failing{RESET}")
 except Exception as e:
-    print(f"{RED}● fail2ban error: {e}{RESET}")
+    issues.append(f"{RED}● fail2ban error: {e}{RESET}")
+
+if issues:
+    for issue in issues:
+        print(issue)
+else:
+    print(f"{GREEN}● Firewall OK — no issues detected{RESET}")
 PY' || true
             sleep 60
         done
