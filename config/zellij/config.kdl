@@ -14,10 +14,10 @@ themes {
         red 204 36 29
         green 152 151 26
         yellow 215 153 33
-        blue 216 233 234
-        magenta 234 217 228
+        blue 69 133 136
+        magenta 177 98 134
         orange 175 58 3
-        cyan 220 232 215
+        cyan 104 157 106
         white 60 56 54
     }
 }

@@ -52,8 +52,10 @@ for row in jail_status.splitlines():
     if "Currently failed:" in row:
         failed = row.split(":", 1)[1].strip()
 print()
-print(f"{GREEN if banned == "0" else RED}●{RESET} fail2ban banned   {banned}")
-print(f"{GREEN if failed == "0" else YELLOW}●{RESET} ssh failed now    {failed}")
+banned_color = GREEN if banned == "0" else RED
+failed_color = GREEN if failed == "0" else YELLOW
+print(f"{banned_color}●{RESET} fail2ban banned   {banned}")
+print(f"{failed_color}●{RESET} ssh failed now    {failed}")
 
 try:
     ufw = subprocess.check_output(["ufw", "status"], text=True, stderr=subprocess.DEVNULL)
@@ -100,9 +102,10 @@ for line in out.splitlines()[1:]:
     proc = line.split("users:(", 1)[1].split(")", 1)[0] if "users:(" in line else "-"
     rows.append((proto, local, proc))
 
+WATCHED_PORTS = {"22", "443", "3000", "7788", "11434", "19999", "8080"}
 interesting = []
 for proto, local, proc in rows:
-    if any(p in local for p in [":22", ":443", ":3000", ":7788", ":11434", ":19999", ":8080"]):
+    if local.rsplit(":", 1)[-1] in WATCHED_PORTS:
         interesting.append((proto, local, proc))
 
 for proto, local, proc in interesting[:18]:

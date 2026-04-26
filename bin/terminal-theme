@@ -1,0 +1,106 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+theme="${1:-light}"
+script_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ -f "$script_root/config/wezterm/wezterm.lua" ]]; then
+    repo_dir="$script_root"
+elif [[ -f "$HOME/Projects/terminal-config/config/wezterm/wezterm.lua" ]]; then
+    repo_dir="$HOME/Projects/terminal-config"
+else
+    echo "terminal-theme: cannot find terminal-config checkout" >&2
+    exit 1
+fi
+home_dir="$HOME"
+
+usage() {
+    cat <<'EOF'
+Usage: terminal-theme light
+
+Apply a terminal template consistently across:
+  - WezTerm colors
+  - Zellij theme/layouts
+  - Codex TUI theme
+
+The light template also patches the active Codex Zellij pane to prevent the
+dark Codex input box from staying cached in a running session.
+EOF
+}
+
+set_codex_theme() {
+    local codex_config="$home_dir/.codex/config.toml"
+    mkdir -p "$(dirname "$codex_config")"
+    python3 - "$codex_config" <<'PY'
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+text = path.read_text() if path.exists() else ""
+theme = 'theme = "gruvbox-light"'
+
+if "[tui]" not in text:
+    text = text.rstrip() + "\n\n[tui]\n" + theme + "\n"
+else:
+    start = text.index("[tui]")
+    next_section = text.find("\n[", start + 1)
+    end = len(text) if next_section == -1 else next_section
+    block = text[start:end]
+    rest = "" if next_section == -1 else text[next_section:]
+
+    lines = block.splitlines()
+    for index, line in enumerate(lines):
+        if line.strip().startswith("theme"):
+            lines[index] = theme
+            break
+    else:
+        lines.insert(1, theme)
+
+    text = text[:start] + "\n".join(lines) + rest
+
+path.write_text(text)
+PY
+}
+
+apply_light() {
+    mkdir -p "$home_dir/.config/wezterm" "$home_dir/.config/zellij/layouts"
+
+    cp "$repo_dir/config/wezterm/wezterm.lua" "$home_dir/.config/wezterm/wezterm.lua"
+    cp "$repo_dir/config/zellij/config.kdl" "$home_dir/.config/zellij/config.kdl"
+    cp "$repo_dir/config/zellij/layouts/ai.kdl" "$home_dir/.config/zellij/layouts/ai.kdl"
+    cp "$repo_dir/config/zellij/layouts/codex.kdl" "$home_dir/.config/zellij/layouts/codex.kdl"
+    cp "$repo_dir/config/zellij/layouts/claude.kdl" "$home_dir/.config/zellij/layouts/claude.kdl"
+    cp "$repo_dir/config/zellij/layouts/help.kdl" "$home_dir/.config/zellij/layouts/help.kdl"
+    cp "$repo_dir/config/zellij/layouts/llm.kdl" "$home_dir/.config/zellij/layouts/llm.kdl"
+    cp "$repo_dir/config/zellij/layouts/main.kdl" "$home_dir/.config/zellij/layouts/main.kdl"
+    cp "$repo_dir/config/zellij/layouts/sec.kdl" "$home_dir/.config/zellij/layouts/sec.kdl"
+
+    set_codex_theme
+
+    cat <<'EOF'
+Applied light terminal template.
+
+Persistent settings:
+  WezTerm: light Gruvbox palette
+  Zellij: ai_gruvbox_day
+  Codex:  gruvbox-light
+  Panes:  light foreground/background applied to all active Zellij terminal panes
+
+If Codex was already running and still shows a dark input box, restart that
+Codex pane with:
+  codex resume --last -c 'tui.theme="gruvbox-light"'
+EOF
+}
+
+case "$theme" in
+    light|day|gruvbox-light)
+        apply_light
+        ;;
+    -h|--help|help)
+        usage
+        ;;
+    *)
+        echo "terminal-theme: unsupported template: $theme" >&2
+        usage >&2
+        exit 2
+        ;;
+esac

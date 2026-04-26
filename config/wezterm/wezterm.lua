@@ -3,10 +3,9 @@ local act = wezterm.action
 local mux = wezterm.mux
 
 local home = wezterm.home_dir
-local zellij = home .. '/bin/zellij'
-local ai_cmd = zellij .. ' attach ai || ' .. zellij .. ' --session ai --new-session-with-layout ai || exec bash -li'
-local codex_cmd = zellij .. ' attach codex || ' .. zellij .. ' --session codex --new-session-with-layout codex || exec bash -li'
-local claude_cmd = zellij .. ' attach claude || ' .. zellij .. ' --session claude --new-session-with-layout claude || exec bash -li'
+local ai_cmd = 'zellij attach ai || zellij --session ai --new-session-with-layout ai || exec bash -li'
+local codex_cmd = 'zellij attach codex || zellij --session codex --new-session-with-layout codex || exec bash -li'
+local claude_cmd = 'zellij attach claude || zellij --session claude --new-session-with-layout claude || exec bash -li'
 
 wezterm.on('gui-startup', function(cmd)
   local tab, pane, window = mux.spawn_window(cmd or {})
@@ -46,8 +45,8 @@ return {
     selection_bg = '#fabd2f',
     scrollbar_thumb = '#d5c4a1',
     split = '#d5c4a1',
-    ansi = { '#fbf1c7', '#cc241d', '#98971a', '#d79921', '#d8e9ea', '#ead9e4', '#dce8d7', '#7c6f64' },
-    brights = { '#3c3836', '#9d0006', '#79740e', '#b57614', '#d8e9ea', '#ead9e4', '#dce8d7', '#3c3836' },
+    ansi = { '#fbf1c7', '#cc241d', '#98971a', '#d79921', '#458588', '#b16286', '#689d6a', '#7c6f64' },
+    brights = { '#3c3836', '#9d0006', '#79740e', '#b57614', '#458588', '#b16286', '#689d6a', '#3c3836' },
   },
   font_size = 13.0,
   line_height = 1.08,

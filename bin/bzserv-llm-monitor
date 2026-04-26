@@ -165,7 +165,8 @@ RESET="\033[0m"; GREEN="\033[38;5;82m"; YELLOW="\033[38;5;220m"; RED="\033[38;5;
 for line in sys.stdin:
     name,status,image=line.rstrip("\n").split("\t",2)
     color=GREEN if status.startswith("Up") else RED
-    print(f"{color}◆{RESET} {name:<12} {status:<18} {image.split("@")[0]}")
+    img = image.split("@")[0]
+    print(f"{color}◆{RESET} {name:<12} {status:<18} {img}")
 '"'"'' || true
             echo
             echo -e "\033[1mHTTP checks\033[0m"
