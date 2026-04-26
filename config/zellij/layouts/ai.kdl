@@ -43,8 +43,8 @@ layout {
                 args "-li"
             }
             pane split_direction="horizontal" {
-                pane name="processes" command="bash" {
-                    args "-lc" "command -v btop >/dev/null && exec btop; command -v htop >/dev/null && exec htop; exec top"
+                pane name="cpu / ram" command="bash" {
+                    args "-lc" "while true; do clear; python3 -c \"\nimport glob, time\nRESET='\\033[0m'; BOLD='\\033[1m'; DIM='\\033[2m'\nGREEN='\\033[38;5;82m'; YELLOW='\\033[38;5;220m'; RED='\\033[38;5;196m'; BLUE='\\033[38;5;45m'\ndef dot(v,w,c):\n    if v>=c: return f'{RED}●{RESET}'\n    if v>=w: return f'{YELLOW}●{RESET}'\n    return f'{GREEN}●{RESET}'\ndef read_cpu():\n    with open('/proc/stat') as f: parts=[int(x) for x in f.readline().split()[1:]]\n    return parts[3]+parts[4], sum(parts)\ni1,t1=read_cpu(); time.sleep(0.5); i2,t2=read_cpu()\ndt=t2-t1; cpu=100*(1-(i2-i1)/dt) if dt else 0\nmem={}\nwith open('/proc/meminfo') as f:\n    for l in f:\n        k,v=l.split(':',1); mem[k]=int(v.strip().split()[0])\nram=100*(1-mem.get('MemAvailable',0)/mem.get('MemTotal',1))\ntemps=[]\nfor p in glob.glob('/sys/class/thermal/thermal_zone*/temp'):\n    try: temps.append(int(open(p).read())/1000)\n    except: pass\nts=time.strftime('%H:%M:%S')\nprint(f'{BOLD}{BLUE}◉ System  {DIM}{ts}{RESET}')\nprint()\nprint(f'{dot(cpu,70,90)} CPU    {cpu:5.1f}%')\nprint(f'{dot(ram,75,90)} RAM    {ram:5.1f}%')\nif temps: print(f'{dot(max(temps),70,85)} Temp   {max(temps):.1f} C')\n\"; sleep 5; done; exec bash -li"
                 }
                 pane name="notes" command="bash" {
                     args "-lc" "printf 'AI workspace notes\\n\\n'; printf 'AGENTS.md: /home/bz/AGENTS.md\\nCodex config: /home/bz/.codex/config.toml\\nClaude settings: /home/bz/.claude/settings.json\\n\\n'; exec bash -li"
