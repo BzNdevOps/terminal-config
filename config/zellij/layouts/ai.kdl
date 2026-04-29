@@ -1,31 +1,11 @@
 layout {
     tab name="Agents" focus=true cwd="/home/bz" {
         pane split_direction="vertical" {
-            pane split_direction="vertical" size="50%" {
-                pane name="claude" command="bash" size="72%" {
-                    args "-lc" "cd /home/bz; /home/bz/.local/bin/claude || true; exec bash -li"
-                }
-                pane split_direction="horizontal" {
-                    pane name="shell-claude" command="bash" {
-                        args "-li"
-                    }
-                    pane name="git-claude" command="bash" {
-                        args "-lc" "while true; do clear; printf 'cwd: '; pwd; printf '\\n'; git status --short --branch 2>/dev/null || true; printf '\\n'; date; sleep 10; done"
-                    }
-                }
+            pane name="claude" command="bash" {
+                args "-lc" "cd /home/bz; /home/bz/.local/bin/claude || true; exec bash -li"
             }
-            pane split_direction="vertical" {
-                pane name="codex" command="bash" size="72%" {
-                    args "-lc" "cd /home/bz; /home/bz/.npm-global/bin/codex -c 'tui.theme=\"gruvbox-light\"' || true; exec bash -li"
-                }
-                pane split_direction="horizontal" {
-                    pane name="shell-codex" command="bash" {
-                        args "-li"
-                    }
-                    pane name="git-codex" command="bash" {
-                        args "-lc" "while true; do clear; printf 'cwd: '; pwd; printf '\\n'; git status --short --branch 2>/dev/null || true; printf '\\n'; date; sleep 10; done"
-                    }
-                }
+            pane name="codex" command="bash" {
+                args "-lc" "cd /home/bz; /home/bz/.npm-global/bin/codex -c 'tui.theme=\"gruvbox-light\"' || true; exec bash -li"
             }
         }
         pane size=1 borderless=true {
