@@ -1,34 +1,30 @@
 layout {
-    tab name="codex" focus=true cwd="/home/bz" {
-        pane split_direction="vertical" size="72%" {
-            pane name="codex" command="bash" {
-                args "-lc" "cd /home/bz; /home/bz/.npm-global/bin/codex -c 'tui.theme=\"gruvbox-light\"' || true; exec bash -li"
-            }
-            pane split_direction="horizontal" {
-                pane name="shell" command="bash" {
-                    args "-li"
+    tab name="Agents" focus=true cwd="/home/bz" {
+        pane split_direction="vertical" {
+            pane split_direction="vertical" size="50%" {
+                pane name="claude" command="bash" size="72%" {
+                    args "-lc" "cd /home/bz; /home/bz/.local/bin/claude || true; exec bash -li"
                 }
-                pane name="git" command="bash" {
-                    args "-lc" "while true; do clear; printf 'cwd: '; pwd; printf '\\n'; git status --short --branch 2>/dev/null || true; printf '\\n'; date; sleep 10; done"
+                pane split_direction="horizontal" {
+                    pane name="shell-claude" command="bash" {
+                        args "-li"
+                    }
+                    pane name="git-claude" command="bash" {
+                        args "-lc" "while true; do clear; printf 'cwd: '; pwd; printf '\\n'; git status --short --branch 2>/dev/null || true; printf '\\n'; date; sleep 10; done"
+                    }
                 }
             }
-        }
-        pane size=1 borderless=true {
-            plugin location="compact-bar"
-        }
-    }
-
-    tab name="claude" cwd="/home/bz" {
-        pane split_direction="vertical" size="72%" {
-            pane name="claude" command="bash" {
-                args "-lc" "cd /home/bz; /home/bz/.local/bin/claude || true; exec bash -li"
-            }
-            pane split_direction="horizontal" {
-                pane name="shell" command="bash" {
-                    args "-li"
+            pane split_direction="vertical" {
+                pane name="codex" command="bash" size="72%" {
+                    args "-lc" "cd /home/bz; /home/bz/.npm-global/bin/codex -c 'tui.theme=\"gruvbox-light\"' || true; exec bash -li"
                 }
-                pane name="git" command="bash" {
-                    args "-lc" "while true; do clear; printf 'cwd: '; pwd; printf '\\n'; git status --short --branch 2>/dev/null || true; printf '\\n'; date; sleep 10; done"
+                pane split_direction="horizontal" {
+                    pane name="shell-codex" command="bash" {
+                        args "-li"
+                    }
+                    pane name="git-codex" command="bash" {
+                        args "-lc" "while true; do clear; printf 'cwd: '; pwd; printf '\\n'; git status --short --branch 2>/dev/null || true; printf '\\n'; date; sleep 10; done"
+                    }
                 }
             }
         }
@@ -38,17 +34,12 @@ layout {
     }
 
     tab name="ops" cwd="/home/bz" {
-        pane split_direction="vertical" size="65%" {
-            pane name="work" command="bash" {
+        pane split_direction="vertical" {
+            pane name="shell" command="bash" {
                 args "-li"
             }
-            pane split_direction="horizontal" {
-                pane name="cpu / ram" command="bash" {
-                    args "-lc" "while true; do clear; python3 -c \"\nimport glob, time\nRESET='\\033[0m'; BOLD='\\033[1m'; DIM='\\033[2m'\nGREEN='\\033[38;5;82m'; YELLOW='\\033[38;5;220m'; RED='\\033[38;5;196m'; BLUE='\\033[38;5;45m'\ndef dot(v,w,c):\n    if v>=c: return f'{RED}●{RESET}'\n    if v>=w: return f'{YELLOW}●{RESET}'\n    return f'{GREEN}●{RESET}'\ndef read_cpu():\n    with open('/proc/stat') as f: parts=[int(x) for x in f.readline().split()[1:]]\n    return parts[3]+parts[4], sum(parts)\ni1,t1=read_cpu(); time.sleep(0.5); i2,t2=read_cpu()\ndt=t2-t1; cpu=100*(1-(i2-i1)/dt) if dt else 0\nmem={}\nwith open('/proc/meminfo') as f:\n    for l in f:\n        k,v=l.split(':',1); mem[k]=int(v.strip().split()[0])\nram=100*(1-mem.get('MemAvailable',0)/mem.get('MemTotal',1))\ntemps=[]\nfor p in glob.glob('/sys/class/thermal/thermal_zone*/temp'):\n    try: temps.append(int(open(p).read())/1000)\n    except: pass\nts=time.strftime('%H:%M:%S')\nprint(f'{BOLD}{BLUE}◉ System  {DIM}{ts}{RESET}')\nprint()\nprint(f'{dot(cpu,70,90)} CPU    {cpu:5.1f}%')\nprint(f'{dot(ram,75,90)} RAM    {ram:5.1f}%')\nif temps: print(f'{dot(max(temps),70,85)} Temp   {max(temps):.1f} C')\n\"; sleep 5; done; exec bash -li"
-                }
-                pane name="notes" command="bash" {
-                    args "-lc" "printf 'AI workspace notes\\n\\n'; printf 'AGENTS.md: /home/bz/AGENTS.md\\nCodex config: /home/bz/.codex/config.toml\\nClaude settings: /home/bz/.claude/settings.json\\n\\n'; exec bash -li"
-                }
+            pane name="shell" command="bash" {
+                args "-li"
             }
         }
         pane size=1 borderless=true {
@@ -106,7 +97,7 @@ layout {
 
     tab name="help" cwd="/home/bz" {
         pane name="shortcuts" command="bash" {
-            args "-lc" "clear; cat <<'EOF'\nAI terminal shortcuts\n\nZellij navigation\n  Alt+h / Alt+l        focus left / right pane\n  Alt+j / Alt+k        focus down / up pane\n  Ctrl+g Ctrl+t 1      go to codex tab\n  Ctrl+g Ctrl+t 2      go to claude tab\n  Ctrl+g Ctrl+t 3      go to ops tab\n  Ctrl+g Ctrl+t 4      go to llm tab\n  Ctrl+g Ctrl+t 5      go to sec tab\n  Ctrl+g Ctrl+t 6      go to help tab\n\nZellij panes\n  Ctrl+g Ctrl+p f      fullscreen focused pane, repeat to restore\n  Ctrl+g Ctrl+p x      close focused pane\n  Ctrl+g Ctrl+p r      new pane to the right\n  Ctrl+g Ctrl+p d      new pane below\n  Ctrl+g Ctrl+p c      rename focused pane\n\nZellij resize\n  Ctrl+g Ctrl+n        resize mode\n  h / j / k / l        resize focused pane\n  + / -                grow / shrink\n  Esc or Enter         exit resize mode\n\nZellij scroll and search\n  Ctrl+g Ctrl+s        scroll mode\n  j / k                scroll line\n  Ctrl+f / Ctrl+b      page down / page up\n  s                    search in scrollback\n  Ctrl+c               return to bottom\n\nZellij session\n  Ctrl+g Ctrl+o d      detach session, keeps agents running\n  Ctrl+g Ctrl+o w      session manager\n  Ctrl+g Ctrl+o l      layout manager\n\nLLM monitoring\n  /home/bz/bin/bzserv-llm-monitor gpu\n  /home/bz/bin/bzserv-llm-monitor status\n  /home/bz/bin/bzserv-llm-monitor traffic\n  /home/bz/bin/bzserv-llm-monitor webui-logs\n  /home/bz/bin/bzserv-llm-monitor ollama-logs\n\nSecurity monitoring\n  /home/bz/bin/bzserv-security-monitor overview\n  /home/bz/bin/bzserv-security-monitor surface\n  /home/bz/bin/bzserv-security-monitor auth\n  /home/bz/bin/bzserv-security-monitor firewall\n\nClose sessions from shell\n  zellij list-sessions\n  zellij delete-session ai --force\n  zellij delete-session main --force\n  zellij delete-all-sessions --force\n\nWezTerm\n  Ctrl+Shift+F9        open AI cockpit\n  Ctrl+Shift+F10       open Codex-only session\n  Ctrl+Shift+F11       open Claude-only session\n  Ctrl+Shift+F         search terminal output\n  Ctrl+Shift+PageUp    scroll page up\n  Ctrl+Shift+PageDown  scroll page down\n  Alt+Shift+V          paste latest screenshot path\n\nDaily flow\n  1. Use Alt+h/j/k/l to move without mouse.\n  2. Use Ctrl+g Ctrl+p f for full-screen Codex/Claude.\n  3. Use Ctrl+g Ctrl+t 1/2/3/4/5/6 to jump tabs.\n  4. Use Ctrl+g Ctrl+o d before closing WezTerm.\nEOF\nexec bash -li"
+            args "-lc" "clear; cat <<'EOF'\nAI terminal shortcuts\n\nZellij navigation\n  Alt+h / Alt+l        focus left / right pane\n  Alt+j / Alt+k        focus down / up pane\n  Ctrl+g Ctrl+t 1      go to Agents tab\n  Ctrl+g Ctrl+t 2      go to ops tab\n  Ctrl+g Ctrl+t 3      go to llm tab\n  Ctrl+g Ctrl+t 4      go to sec tab\n  Ctrl+g Ctrl+t 5      go to help tab\n\nZellij panes\n  Ctrl+g Ctrl+p f      fullscreen focused pane, repeat to restore\n  Ctrl+g Ctrl+p x      close focused pane\n  Ctrl+g Ctrl+p r      new pane to the right\n  Ctrl+g Ctrl+p d      new pane below\n  Ctrl+g Ctrl+p c      rename focused pane\n\nZellij resize\n  Ctrl+g Ctrl+n        resize mode\n  h / j / k / l        resize focused pane\n  + / -                grow / shrink\n  Esc or Enter         exit resize mode\n\nZellij scroll and search\n  Ctrl+g Ctrl+s        scroll mode\n  j / k                scroll line\n  Ctrl+f / Ctrl+b      page down / page up\n  s                    search in scrollback\n  Ctrl+c               return to bottom\n\nZellij session\n  Ctrl+g Ctrl+o d      detach session, keeps agents running\n  Ctrl+g Ctrl+o w      session manager\n  Ctrl+g Ctrl+o l      layout manager\n\nLLM monitoring\n  /home/bz/bin/bzserv-llm-monitor gpu\n  /home/bz/bin/bzserv-llm-monitor status\n  /home/bz/bin/bzserv-llm-monitor traffic\n  /home/bz/bin/bzserv-llm-monitor webui-logs\n  /home/bz/bin/bzserv-llm-monitor ollama-logs\n\nSecurity monitoring\n  /home/bz/bin/bzserv-security-monitor overview\n  /home/bz/bin/bzserv-security-monitor surface\n  /home/bz/bin/bzserv-security-monitor auth\n  /home/bz/bin/bzserv-security-monitor firewall\n\nClose sessions from shell\n  zellij list-sessions\n  zellij delete-session ai --force\n  zellij delete-session main --force\n  zellij delete-all-sessions --force\n\nWezTerm\n  Ctrl+Shift+F9        open AI cockpit\n  Ctrl+Shift+F10       open Codex-only session\n  Ctrl+Shift+F11       open Claude-only session\n  Ctrl+Shift+F         search terminal output\n  Ctrl+Shift+PageUp    scroll page up\n  Ctrl+Shift+PageDown  scroll page down\n  Alt+Shift+V          paste latest screenshot path\n\nTheme switching\n  terminal-theme light       apply the light day template\n  terminal-theme --help      show available template commands\n  Restart Codex if its input box keeps the old cached colors.\n\nDaily flow\n  1. Use Alt+h/j/k/l to move without mouse.\n  2. Use Ctrl+g Ctrl+p f for full-screen Codex/Claude.\n  3. Use Ctrl+g Ctrl+t 1/2/3/4/5/6 to jump tabs.\n  4. Use Ctrl+g Ctrl+o d before closing WezTerm.\nEOF\nexec bash -li"
         }
         pane size=1 borderless=true {
             plugin location="compact-bar"

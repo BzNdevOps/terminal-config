@@ -15,6 +15,7 @@ case "$mode" in
             ssh_cmd 'sudo -n python3 - <<'"'"'PY'"'"'
 import subprocess
 import time
+import glob
 
 RESET = "\033[0m"
 BOLD = "\033[1m"
@@ -24,6 +25,7 @@ YELLOW = "\033[38;5;220m"
 RED = "\033[38;5;196m"
 CYAN = "\033[38;5;45m"
 MAGENTA = "\033[38;5;207m"
+BLUE = "\033[38;5;45m"
 
 def dot(value, warn, crit):
     if value >= crit:
@@ -32,11 +34,63 @@ def dot(value, warn, crit):
         return f"{YELLOW}●{RESET}"
     return f"{GREEN}●{RESET}"
 
+def read_cpu_stat():
+    with open("/proc/stat") as f:
+        parts = [int(x) for x in f.readline().split()[1:]]
+    return parts[3] + parts[4], sum(parts)
+
+def read_rapl():
+    path = "/sys/class/powercap/intel-rapl/intel-rapl:0/energy_uj"
+    try:
+        return int(open(path).read().strip())
+    except Exception:
+        return None
+
+def read_cpu_temp():
+    for hwmon in sorted(glob.glob("/sys/class/hwmon/hwmon*")):
+        for label_path in sorted(glob.glob(f"{hwmon}/temp*_label")):
+            try:
+                if open(label_path).read().strip() == "CPU":
+                    input_path = label_path.replace("_label", "_input")
+                    return int(open(input_path).read().strip()) / 1000
+            except Exception:
+                pass
+    return None
+
+idle1, total1 = read_cpu_stat()
+rapl1 = read_rapl()
+t_start = time.time()
+
 out = subprocess.check_output([
     "nvidia-smi",
     "--query-gpu=name,utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw,power.limit",
     "--format=csv,noheader,nounits",
 ], text=True).strip()
+
+time.sleep(0.5)
+
+idle2, total2 = read_cpu_stat()
+rapl2 = read_rapl()
+t_end = time.time()
+
+dt = total2 - total1
+cpu_util = 100 * (1 - (idle2 - idle1) / dt) if dt else 0
+
+mem = {}
+with open("/proc/meminfo") as f:
+    for l in f:
+        k, v = l.split(":", 1)
+        mem[k] = int(v.strip().split()[0])
+ram_used_mb = (mem.get("MemTotal", 0) - mem.get("MemAvailable", 0)) // 1024
+ram_total_mb = mem.get("MemTotal", 0) // 1024
+ram_pct = 100 * ram_used_mb / ram_total_mb if ram_total_mb else 0
+
+cpu_temp = read_cpu_temp()
+
+sys_power = None
+if rapl1 is not None and rapl2 is not None:
+    elapsed = t_end - t_start
+    sys_power = (rapl2 - rapl1) / 1_000_000 / elapsed if elapsed > 0 else None
 
 name, util, mem_used, mem_total, temp, power, power_limit = [x.strip() for x in out.split(",")]
 util = float(util)
@@ -48,7 +102,9 @@ power = float(power)
 power_limit = float(power_limit) if power_limit else 0
 power_pct = 100 * power / power_limit if power_limit else 0
 
-print(f"{BOLD}{MAGENTA}◉ GPU / VRAM{RESET}  {DIM}{time.strftime("%Y-%m-%d %H:%M:%S")}{RESET}")
+ts = time.strftime("%Y-%m-%d %H:%M:%S")
+
+print(f"{BOLD}{MAGENTA}◉ GPU / VRAM{RESET}  {DIM}{ts}{RESET}")
 print()
 print(f"{CYAN}{name}{RESET}")
 print(f"{dot(util, 70, 90)} GPU util   {util:6.1f}%")
@@ -68,6 +124,20 @@ if ps:
         print(f"{GREEN}◆{RESET} {line}")
 else:
     print(f"{DIM}no active compute process listed{RESET}")
+
+print()
+print(f"{BOLD}{BLUE}◉ CPU / RAM{RESET}")
+print()
+print(f"{dot(cpu_util, 70, 90)} CPU util   {cpu_util:6.1f}%")
+if cpu_temp is not None:
+    print(f"{dot(cpu_temp, 70, 85)} CPU temp   {cpu_temp:6.1f} C")
+else:
+    print(f"{DIM}● CPU temp   n/a{RESET}")
+print(f"{dot(ram_pct, 75, 90)} RAM        {ram_used_mb:6d}/{ram_total_mb} MB  {ram_pct:5.1f}%")
+if sys_power is not None:
+    print(f"{dot(sys_power, 50, 100)} Sys power  {sys_power:6.1f} W")
+else:
+    print(f"{DIM}● Sys power  n/a{RESET}")
 PY'
             sleep 5
         done
@@ -76,7 +146,6 @@ PY'
         while true; do
             printf '\033c'
             ssh_cmd 'python3 - <<'"'"'PY'"'"'
-import glob
 import subprocess
 import time
 
@@ -84,23 +153,8 @@ RESET = "\033[0m"
 BOLD = "\033[1m"
 DIM = "\033[2m"
 GREEN = "\033[38;5;82m"
-YELLOW = "\033[38;5;220m"
 RED = "\033[38;5;196m"
 BLUE = "\033[38;5;45m"
-ORANGE = "\033[38;5;208m"
-
-def dot(value, warn, crit, reverse=False):
-    if reverse:
-        if value <= crit:
-            return f"{RED}●{RESET}"
-        if value <= warn:
-            return f"{YELLOW}●{RESET}"
-        return f"{GREEN}●{RESET}"
-    if value >= crit:
-        return f"{RED}●{RESET}"
-    if value >= warn:
-        return f"{YELLOW}●{RESET}"
-    return f"{GREEN}●{RESET}"
 
 def service_line(name):
     try:
@@ -108,53 +162,11 @@ def service_line(name):
     except subprocess.CalledProcessError:
         state = "inactive"
     color = GREEN if state == "active" else RED
-    symbol = "●" if state == "active" else "●"
-    print(f"{color}{symbol}{RESET} {name:<12} {state}")
+    print(f"{color}●{RESET} {name:<12} {state}")
 
-def read_cpu():
-    with open("/proc/stat", "r", encoding="utf-8") as f:
-        parts = [int(x) for x in f.readline().split()[1:]]
-    idle = parts[3] + parts[4]
-    total = sum(parts)
-    return idle, total
-
-idle1, total1 = read_cpu()
-time.sleep(0.4)
-idle2, total2 = read_cpu()
-total_delta = total2 - total1
-idle_delta = idle2 - idle1
-cpu_pct = 100 * (1 - idle_delta / total_delta) if total_delta else 0
-
-mem = {}
-with open("/proc/meminfo", "r", encoding="utf-8") as f:
-    for line in f:
-        key, value = line.split(":", 1)
-        mem[key] = int(value.strip().split()[0])
-mem_total = mem.get("MemTotal", 0)
-mem_available = mem.get("MemAvailable", 0)
-ram_pct = 100 * (1 - mem_available / mem_total) if mem_total else 0
-
-temps = []
-for path in glob.glob("/sys/class/thermal/thermal_zone*/temp"):
-    try:
-        raw = int(open(path, "r", encoding="utf-8").read().strip())
-    except Exception:
-        continue
-    if raw:
-        temps.append(raw / 1000)
-temp_text = f"{max(temps):.1f} C" if temps else "n/a"
-
-print(f"{BOLD}{BLUE}◉ System / Services{RESET}  {DIM}{time.strftime("%Y-%m-%d %H:%M:%S")}{RESET}")
+ts = time.strftime("%Y-%m-%d %H:%M:%S")
+print(f"{BOLD}{BLUE}◉ Services{RESET}  {DIM}{ts}{RESET}")
 print()
-print(f"{dot(cpu_pct, 70, 90)} CPU used   {cpu_pct:6.1f}%")
-print(f"{dot(ram_pct, 75, 90)} RAM used   {ram_pct:6.1f}%")
-if temp_text == "n/a":
-    print(f"{DIM}● CPU temp   n/a{RESET}")
-else:
-    temp = float(temp_text.split()[0])
-    print(f"{dot(temp, 70, 85)} CPU temp   {temp_text}")
-print()
-print(f"{BOLD}Services{RESET}")
 for svc in ["ollama", "open-webui", "nginx", "netdata", "tailscaled"]:
     service_line(svc)
 PY' || true
@@ -270,7 +282,7 @@ if rows:
     print(f"{BOLD}Latest responses{RESET}")
     print("Time                 Model          PG tok/s  TG tok/s  In tok  Out tok")
     print("-------------------  ------------  --------  --------  ------  -------")
-    for model, u, created_at in rows[:8]:
+    for model, u, created_at in rows[:3]:
         pg = float(u.get("prompt_token/s") or 0)
         tg = float(u.get("response_token/s") or 0)
         ts = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(int(created_at or 0)))
@@ -280,7 +292,7 @@ if rows:
 else:
     print("No completed Open WebUI/Ollama usage records found.")
 PY' || true
-            sleep 30
+            sleep 60
         done
         ;;
     webui-logs)

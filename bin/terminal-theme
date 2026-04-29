@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-theme="${1:-light}"
+theme="${1:-auto}"
 script_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 if [[ -f "$script_root/config/wezterm/wezterm.lua" ]]; then
     repo_dir="$script_root"
@@ -15,92 +15,237 @@ home_dir="$HOME"
 
 usage() {
     cat <<'EOF'
-Usage: terminal-theme light
+Usage: terminal-theme [light|night|sunset|auto]
 
-Apply a terminal template consistently across:
-  - WezTerm colors
-  - Zellij theme/layouts
-  - Codex TUI theme
+  light    Gruvbox Light    — readable daytime          (07:00–17:59)
+  sunset   Gruvbox Dark     — warm amber evening        (18:00–20:59)
+  night    Catppuccin Mocha — low-glare dark sessions   (21:00–06:59)
+  auto     Pick theme by current time (same windows as above)
 
-The light template also patches the active Codex Zellij pane to prevent the
-dark Codex input box from staying cached in a running session.
+Applies consistently across WezTerm colors, Zellij theme, and Codex TUI.
 EOF
 }
 
+pick_auto() {
+    local hour
+    hour=$(date +%H)
+    if   [[ "$hour" -ge 7  && "$hour" -le 17 ]]; then echo light
+    elif [[ "$hour" -ge 18 && "$hour" -le 20 ]]; then echo sunset
+    else echo night
+    fi
+}
+
+copy_base_files() {
+    mkdir -p "$home_dir/.config/wezterm" "$home_dir/.config/zellij/layouts"
+    cp "$repo_dir/config/wezterm/wezterm.lua"        "$home_dir/.config/wezterm/wezterm.lua"
+    cp "$repo_dir/config/zellij/config.kdl"          "$home_dir/.config/zellij/config.kdl"
+    cp "$repo_dir/config/zellij/layouts/ai.kdl"      "$home_dir/.config/zellij/layouts/ai.kdl"
+    cp "$repo_dir/config/zellij/layouts/codex.kdl"   "$home_dir/.config/zellij/layouts/codex.kdl"
+    cp "$repo_dir/config/zellij/layouts/claude.kdl"  "$home_dir/.config/zellij/layouts/claude.kdl"
+    cp "$repo_dir/config/zellij/layouts/help.kdl"    "$home_dir/.config/zellij/layouts/help.kdl"
+    cp "$repo_dir/config/zellij/layouts/llm.kdl"     "$home_dir/.config/zellij/layouts/llm.kdl"
+    cp "$repo_dir/config/zellij/layouts/main.kdl"    "$home_dir/.config/zellij/layouts/main.kdl"
+    cp "$repo_dir/config/zellij/layouts/sec.kdl"     "$home_dir/.config/zellij/layouts/sec.kdl"
+}
+
+patch_wezterm_colors() {
+    python3 - "$home_dir/.config/wezterm/wezterm.lua" "$1" <<'PYEOF'
+import sys, re
+
+path  = sys.argv[1]
+theme = sys.argv[2]
+
+COLORS = {
+    'night': """\
+  colors = {
+    foreground = '#cdd6f4',
+    background = '#1e1e2e',
+    cursor_bg = '#f5e0dc',
+    cursor_fg = '#1e1e2e',
+    cursor_border = '#f5e0dc',
+    selection_fg = '#1e1e2e',
+    selection_bg = '#f5c2e7',
+    scrollbar_thumb = '#45475a',
+    split = '#45475a',
+    ansi = { '#45475a', '#f38ba8', '#a6e3a1', '#f9e2af', '#89b4fa', '#f5c2e7', '#94e2d5', '#bac2de' },
+    brights = { '#585b70', '#f38ba8', '#a6e3a1', '#f9e2af', '#89b4fa', '#f5c2e7', '#94e2d5', '#a6adc8' },
+  },""",
+    'sunset': """\
+  colors = {
+    foreground = '#ebdbb2',
+    background = '#282828',
+    cursor_bg = '#ebdbb2',
+    cursor_fg = '#282828',
+    cursor_border = '#ebdbb2',
+    selection_fg = '#282828',
+    selection_bg = '#fe8019',
+    scrollbar_thumb = '#504945',
+    split = '#504945',
+    ansi = { '#282828', '#cc241d', '#98971a', '#d79921', '#458588', '#b16286', '#689d6a', '#a89984' },
+    brights = { '#928374', '#fb4934', '#b8bb26', '#fabd2f', '#83a598', '#d3869b', '#8ec07c', '#ebdbb2' },
+  },""",
+}
+
+text = open(path).read()
+text = re.sub(r'  colors = \{.*?  \},', COLORS[theme], text, flags=re.DOTALL)
+open(path, 'w').write(text)
+PYEOF
+}
+
+patch_zellij_theme() {
+    python3 - "$home_dir/.config/zellij/config.kdl" "$1" <<'PYEOF'
+import sys, re
+
+path       = sys.argv[1]
+theme_name = sys.argv[2]
+
+THEME_BLOCKS = {
+    'ai_catppuccin_mocha': """\
+themes {
+    ai_catppuccin_mocha {
+        bg 30 30 46
+        fg 205 214 244
+        black 69 71 90
+        red 243 139 168
+        green 166 227 161
+        yellow 249 226 175
+        blue 137 180 250
+        magenta 245 194 231
+        orange 250 179 135
+        cyan 148 226 213
+        white 166 173 200
+    }
+}""",
+    'ai_gruvbox_warm': """\
+themes {
+    ai_gruvbox_warm {
+        bg 40 40 40
+        fg 235 219 178
+        black 40 40 40
+        red 204 36 29
+        green 152 151 26
+        yellow 215 153 33
+        blue 69 133 136
+        magenta 177 98 134
+        orange 254 128 25
+        cyan 104 157 106
+        white 235 219 178
+    }
+}""",
+    'ai_gruvbox_day': """\
+themes {
+    ai_gruvbox_day {
+        bg 251 241 199
+        fg 60 56 54
+        black 251 241 199
+        red 204 36 29
+        green 152 151 26
+        yellow 215 153 33
+        blue 69 133 136
+        magenta 177 98 134
+        orange 175 58 3
+        cyan 0 107 139
+        white 60 56 54
+    }
+}""",
+}
+
+text = open(path).read()
+
+# Replace theme reference line
+text = re.sub(r'theme "[^"]*"', f'theme "{theme_name}"', text)
+
+# Replace themes { ... } block using brace counting
+start = text.index('themes {')
+depth = 0
+end = start
+for i, c in enumerate(text[start:]):
+    if c == '{':
+        depth += 1
+    elif c == '}':
+        depth -= 1
+        if depth == 0:
+            end = start + i + 1
+            break
+
+text = text[:start] + THEME_BLOCKS[theme_name] + text[end:]
+open(path, 'w').write(text)
+PYEOF
+}
+
 set_codex_theme() {
+    local codex_theme="$1"
     local codex_config="$home_dir/.codex/config.toml"
     mkdir -p "$(dirname "$codex_config")"
-    python3 - "$codex_config" <<'PY'
+    python3 - "$codex_config" "$codex_theme" <<'PYEOF'
 import sys
 from pathlib import Path
 
-path = Path(sys.argv[1])
-text = path.read_text() if path.exists() else ""
-theme = 'theme = "gruvbox-light"'
+path  = Path(sys.argv[1])
+theme = sys.argv[2]
+text  = path.read_text() if path.exists() else ""
+entry = f'theme = "{theme}"'
 
 if "[tui]" not in text:
-    text = text.rstrip() + "\n\n[tui]\n" + theme + "\n"
+    text = text.rstrip() + "\n\n[tui]\n" + entry + "\n"
 else:
     start = text.index("[tui]")
     next_section = text.find("\n[", start + 1)
     end = len(text) if next_section == -1 else next_section
     block = text[start:end]
-    rest = "" if next_section == -1 else text[next_section:]
-
+    rest  = "" if next_section == -1 else text[next_section:]
     lines = block.splitlines()
-    for index, line in enumerate(lines):
+    for i, line in enumerate(lines):
         if line.strip().startswith("theme"):
-            lines[index] = theme
+            lines[i] = entry
             break
     else:
-        lines.insert(1, theme)
-
+        lines.insert(1, entry)
     text = text[:start] + "\n".join(lines) + rest
 
 path.write_text(text)
-PY
+PYEOF
 }
 
 apply_light() {
-    mkdir -p "$home_dir/.config/wezterm" "$home_dir/.config/zellij/layouts"
+    copy_base_files
+    # repo config files are the light baseline — no color patching needed
+    set_codex_theme gruvbox-light
+    echo "Applied: light (Gruvbox Light)"
+}
 
-    cp "$repo_dir/config/wezterm/wezterm.lua" "$home_dir/.config/wezterm/wezterm.lua"
-    cp "$repo_dir/config/zellij/config.kdl" "$home_dir/.config/zellij/config.kdl"
-    cp "$repo_dir/config/zellij/layouts/ai.kdl" "$home_dir/.config/zellij/layouts/ai.kdl"
-    cp "$repo_dir/config/zellij/layouts/codex.kdl" "$home_dir/.config/zellij/layouts/codex.kdl"
-    cp "$repo_dir/config/zellij/layouts/claude.kdl" "$home_dir/.config/zellij/layouts/claude.kdl"
-    cp "$repo_dir/config/zellij/layouts/help.kdl" "$home_dir/.config/zellij/layouts/help.kdl"
-    cp "$repo_dir/config/zellij/layouts/llm.kdl" "$home_dir/.config/zellij/layouts/llm.kdl"
-    cp "$repo_dir/config/zellij/layouts/main.kdl" "$home_dir/.config/zellij/layouts/main.kdl"
-    cp "$repo_dir/config/zellij/layouts/sec.kdl" "$home_dir/.config/zellij/layouts/sec.kdl"
+apply_night() {
+    copy_base_files
+    patch_wezterm_colors night
+    patch_zellij_theme ai_catppuccin_mocha
+    set_codex_theme gruvbox-dark
+    echo "Applied: night (Catppuccin Mocha)"
+}
 
-    set_codex_theme
-
-    cat <<'EOF'
-Applied light terminal template.
-
-Persistent settings:
-  WezTerm: light Gruvbox palette
-  Zellij: ai_gruvbox_day
-  Codex:  gruvbox-light
-  Panes:  light foreground/background applied to all active Zellij terminal panes
-
-If Codex was already running and still shows a dark input box, restart that
-Codex pane with:
-  codex resume --last -c 'tui.theme="gruvbox-light"'
-EOF
+apply_sunset() {
+    copy_base_files
+    patch_wezterm_colors sunset
+    patch_zellij_theme ai_gruvbox_warm
+    set_codex_theme gruvbox-dark
+    echo "Applied: sunset (Gruvbox Dark)"
 }
 
 case "$theme" in
     light|day|gruvbox-light)
-        apply_light
+        apply_light ;;
+    night|dark|catppuccin|mocha)
+        apply_night ;;
+    sunset|warm|gruvbox-dark|gruvbox-warm)
+        apply_sunset ;;
+    auto)
+        selected=$(pick_auto)
+        echo "auto → $selected (hour=$(date +%H))"
+        apply_"$selected"
         ;;
     -h|--help|help)
-        usage
-        ;;
+        usage ;;
     *)
         echo "terminal-theme: unsupported template: $theme" >&2
         usage >&2
-        exit 2
-        ;;
+        exit 2 ;;
 esac
