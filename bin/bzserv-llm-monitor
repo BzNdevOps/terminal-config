@@ -184,19 +184,24 @@ for line in sys.stdin:
             echo -e "\033[1mHTTP checks\033[0m"
             ssh_cmd 'python3 - <<'"'"'PY'"'"'
 import urllib.request
+import ssl
 
 RESET = "\033[0m"
 GREEN = "\033[38;5;82m"
 RED = "\033[38;5;196m"
 YELLOW = "\033[38;5;220m"
 
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
+
 checks = [
-    ("open-webui nginx", "http://127.0.0.1:3000/"),
+    ("open-webui nginx", "https://100.64.144.126/"),
     ("netdata tailscale", "http://100.64.144.126:19999/"),
 ]
 for name, url in checks:
     try:
-        with urllib.request.urlopen(url, timeout=2) as r:
+        with urllib.request.urlopen(url, timeout=2, context=ctx if url.startswith("https") else None) as r:
             code = r.status
     except Exception:
         code = 0
