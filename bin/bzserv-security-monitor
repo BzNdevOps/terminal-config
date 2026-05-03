@@ -12,7 +12,7 @@ case "$mode" in
     overview)
         while true; do
             printf '\033c'
-            ssh_cmd 'sudo -n python3 - <<'"'"'PY'"'"'
+            ssh -o BatchMode=yes -o ConnectTimeout=5 "$target" "sudo -n python3 -" <<'PY' || true
 import json
 import subprocess
 import time
@@ -70,7 +70,7 @@ try:
 except Exception:
     ts_ok = False
 print(f"{GREEN if ts_ok else RED}●{RESET} tailscale online  {str(ts_ok).lower()}")
-PY' || true
+PY
             echo
             printf '\033[1m\033[38;5;45m◉ vm1 integrity-check\033[0m\n\n'
             ssh_cmd 'ssh -o BatchMode=yes -o ConnectTimeout=5 vm1 "
@@ -94,7 +94,7 @@ fi
     surface)
         while true; do
             printf '\033c'
-            ssh_cmd 'sudo -n python3 - <<'"'"'PY'"'"'
+            ssh -o BatchMode=yes -o ConnectTimeout=5 "$target" "sudo -n python3 -" <<'PY' || true
 import subprocess
 import time
 
@@ -142,14 +142,14 @@ if issues:
         print(f"{color}◆{RESET} {proto:<4} {local:<28} {proc[:28]}  {DIM}({reason}){RESET}")
 else:
     print(f"{GREEN}● No unexpected public exposures{RESET}")
-PY' || true
+PY
             sleep 120
         done
         ;;
     auth)
         while true; do
             printf '\033c'
-            ssh_cmd 'sudo -n python3 - <<'"'"'PY'"'"'
+            ssh -o BatchMode=yes -o ConnectTimeout=5 "$target" "sudo -n python3 -" <<'PY' || true
 import subprocess
 import time
 
@@ -174,14 +174,14 @@ print(f"{BOLD}Recent events{RESET}")
 for line in (failed[-8:] + accepted[-6:])[-12:]:
     color = RED if any(s in line.lower() for s in ["failed", "invalid", "authentication failure"]) else GREEN
     print(f"{color}◆{RESET} {line[:110]}")
-PY' || true
+PY
             sleep 120
         done
         ;;
     firewall)
         while true; do
             printf '\033c'
-            ssh_cmd 'sudo -n python3 - <<'"'"'PY'"'"'
+            ssh -o BatchMode=yes -o ConnectTimeout=5 "$target" "sudo -n python3 -" <<'PY' || true
 import subprocess
 import time
 
@@ -236,7 +236,7 @@ if issues:
         print(issue)
 else:
     print(f"{GREEN}● Firewall OK — no issues detected{RESET}")
-PY' || true
+PY
             sleep 60
         done
         ;;

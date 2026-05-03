@@ -8,11 +8,24 @@ ssh_cmd() {
     ssh -o BatchMode=yes -o ConnectTimeout=5 "$target" "$@"
 }
 
+# Run Python via base64 on remote (avoids heredoc-in-ssh quoting issues)
+_ssh_py_sudo() {
+    local encoded
+    encoded=$(base64 -w0)
+    ssh -o BatchMode=yes -o ConnectTimeout=5 "$target" "echo '$encoded' | base64 -d | sudo -n python3 -" || true
+}
+
+_ssh_py() {
+    local encoded
+    encoded=$(base64 -w0)
+    ssh -o BatchMode=yes -o ConnectTimeout=5 "$target" "echo '$encoded' | base64 -d | python3 -" || true
+}
+
 case "$mode" in
     gpu)
         while true; do
             printf '\033c'
-            ssh_cmd 'sudo -n python3 - <<'"'"'PY'"'"'
+            _ssh_py_sudo <<'PY'
 import subprocess
 import time
 import glob
@@ -138,14 +151,14 @@ if sys_power is not None:
     print(f"{dot(sys_power, 50, 100)} Sys power  {sys_power:6.1f} W")
 else:
     print(f"{DIM}● Sys power  n/a{RESET}")
-PY'
+PY
             sleep 5
         done
         ;;
     status)
         while true; do
             printf '\033c'
-            ssh_cmd 'python3 - <<'"'"'PY'"'"'
+            _ssh_py <<'PY'
 import subprocess
 import time
 
@@ -169,7 +182,7 @@ print(f"{BOLD}{BLUE}◉ Services{RESET}  {DIM}{ts}{RESET}")
 print()
 for svc in ["ollama", "open-webui", "nginx", "netdata", "tailscaled"]:
     service_line(svc)
-PY' || true
+PY
             echo
             echo -e "\033[1mContainers\033[0m"
             ssh_cmd 'sudo -n podman ps --format "{{.Names}}\t{{.Status}}\t{{.Image}}" | python3 -c '"'"'import sys
@@ -182,7 +195,7 @@ for line in sys.stdin:
 '"'"'' || true
             echo
             echo -e "\033[1mHTTP checks\033[0m"
-            ssh_cmd 'python3 - <<'"'"'PY'"'"'
+            _ssh_py <<'PY'
 import urllib.request
 import ssl
 
@@ -207,14 +220,14 @@ for name, url in checks:
         code = 0
     color = GREEN if 200 <= code < 400 else YELLOW if code else RED
     print(f"{color}●{RESET} {name:<17} {code:>3}")
-PY' || true
+PY
             sleep 15
         done
         ;;
     traffic)
         while true; do
             printf '\033c'
-            ssh_cmd 'sudo -n python3 - <<'"'"'PY'"'"'
+            _ssh_py_sudo <<'PY'
 import json
 import sqlite3
 import time
@@ -296,7 +309,7 @@ if rows:
         print(f"{ts}  {model[:12]:<12}  {pg:>8.2f}  {tg:>8.2f}  {in_tokens:>6}  {out_tokens:>7}")
 else:
     print("No completed Open WebUI/Ollama usage records found.")
-PY' || true
+PY
             sleep 60
         done
         ;;
