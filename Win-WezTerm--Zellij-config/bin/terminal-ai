@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+session="${1:-ai}"
+layout="${TERMINAL_AI_LAYOUT:-ai}"
+cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/terminal-config"
+stamp="$cache_dir/${session}.layout.sha256"
+refresh="${TERMINAL_AI_REFRESH:-auto}"
+
+if [[ -n "${ZELLIJ:-}" ]]; then
+    echo "terminal-ai: detach first, then run this from a normal shell outside Zellij" >&2
+    echo "terminal-ai: use Ctrl+g Ctrl+o d, then run: terminal-ai" >&2
+    exit 2
+fi
+
+layout_dir="${ZELLIJ_CONFIG_DIR:-$HOME/.config/zellij}"
+config_file="${ZELLIJ_CONFIG_FILE:-$layout_dir/config.kdl}"
+
+layout_inputs=(
+    "$config_file"
+    "$layout_dir/layouts/$layout.kdl"
+    "$layout_dir/layouts/help.kdl"
+    "$HOME/bin/terminal-help"
+    "$HOME/bin/bzserv-llm-monitor"
+    "$HOME/bin/bzserv-security-monitor"
+)
+
+current_hash() {
+    local existing=()
+    local path
+
+    for path in "${layout_inputs[@]}"; do
+        [[ -e "$path" ]] && existing+=("$path")
+    done
+
+    if ((${#existing[@]} == 0)); then
+        echo "missing-layout-inputs"
+        return
+    fi
+
+    sha256sum "${existing[@]}" | sha256sum | awk '{print $1}'
+}
+
+session_exists() {
+    zellij list-sessions --short --no-formatting 2>/dev/null | grep -Fxq "$session"
+}
+
+start_session() {
+    mkdir -p "$cache_dir"
+    printf '%s\n' "$1" > "$stamp"
+    exec zellij --session "$session" --new-session-with-layout "$layout"
+}
+
+hash="$(current_hash)"
+previous_hash="$(cat "$stamp" 2>/dev/null || true)"
+
+if session_exists; then
+    case "$refresh" in
+        never)
+            exec zellij attach "$session"
+            ;;
+        always)
+            zellij kill-session "$session" >/dev/null 2>&1 || true
+            start_session "$hash"
+            ;;
+        auto)
+            if [[ "$previous_hash" == "$hash" ]]; then
+                exec zellij attach "$session"
+            fi
+
+            printf 'terminal-ai: refreshing stale %s session only\n' "$session" >&2
+            zellij kill-session "$session" >/dev/null 2>&1 || true
+            start_session "$hash"
+            ;;
+        *)
+            echo "terminal-ai: unsupported TERMINAL_AI_REFRESH=$refresh" >&2
+            exit 2
+            ;;
+    esac
+fi
+
+start_session "$hash"

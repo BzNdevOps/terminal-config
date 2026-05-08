@@ -30,8 +30,19 @@ cp "$REPO_DIR/config/tmux/tmux.conf" "$HOME/.tmux.conf"
 cp -p "$REPO_DIR/bin/zcodex" "$HOME/bin/zcodex"
 cp -p "$REPO_DIR/bin/zclaude" "$HOME/bin/zclaude"
 cp -p "$REPO_DIR/bin/zj" "$HOME/bin/zj"
+cp -p "$REPO_DIR/bin/terminal-ai" "$HOME/bin/terminal-ai"
+cp -p "$REPO_DIR/bin/terminal-help" "$HOME/bin/terminal-help"
 cp -p "$REPO_DIR/bin/terminal-theme" "$HOME/bin/terminal-theme"
 cp -p "$REPO_DIR/bin/bzserv-llm-monitor" "$HOME/bin/bzserv-llm-monitor"
 cp -p "$REPO_DIR/bin/bzserv-security-monitor" "$HOME/bin/bzserv-security-monitor"
+chmod +x \
+    "$HOME/bin/zcodex" \
+    "$HOME/bin/zclaude" \
+    "$HOME/bin/zj" \
+    "$HOME/bin/terminal-ai" \
+    "$HOME/bin/terminal-help" \
+    "$HOME/bin/terminal-theme" \
+    "$HOME/bin/bzserv-llm-monitor" \
+    "$HOME/bin/bzserv-security-monitor"
 
 echo "Installed terminal-config into $HOME"

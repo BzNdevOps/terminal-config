@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cat <<'EOF'
+AI terminal shortcuts
+
+Zellij navigation
+  Alt+h / Alt+l        focus left / right pane
+  Alt+j / Alt+k        focus down / up pane
+  Ctrl+g Ctrl+t 1      go to Agents tab
+  Ctrl+g Ctrl+t 2      go to ops tab
+  Ctrl+g Ctrl+t 3      go to llm tab
+  Ctrl+g Ctrl+t 4      go to sec tab
+  Ctrl+g Ctrl+t 5      go to help tab
+
+Zellij panes
+  Ctrl+g Ctrl+p f      fullscreen focused pane, repeat to restore
+  Ctrl+g Ctrl+p x      close focused pane
+  Ctrl+g Ctrl+p r      new pane to the right
+  Ctrl+g Ctrl+p d      new pane below
+  Ctrl+g Ctrl+p c      rename focused pane
+
+Zellij resize
+  Ctrl+g Ctrl+n        resize mode
+  h / j / k / l        resize focused pane
+  + / -                grow / shrink
+  Esc or Enter         exit resize mode
+
+Zellij scroll and search
+  Ctrl+g Ctrl+s        scroll mode
+  j / k                scroll line
+  Ctrl+f / Ctrl+b      page down / page up
+  s                    search in scrollback
+  Ctrl+c               return to bottom
+
+Zellij session
+  Ctrl+g Ctrl+o d      detach session, keeps agents running
+  Ctrl+g Ctrl+o w      session manager
+  Ctrl+g Ctrl+o l      layout manager
+  Alt+F4 / window X    quit the visible Zellij session
+
+LLM monitoring
+  /home/bz/bin/bzserv-llm-monitor gpu
+  /home/bz/bin/bzserv-llm-monitor status
+  /home/bz/bin/bzserv-llm-monitor traffic
+  /home/bz/bin/bzserv-llm-monitor webui-logs
+  /home/bz/bin/bzserv-llm-monitor ollama-logs
+
+Security monitoring
+  /home/bz/bin/bzserv-security-monitor overview
+  /home/bz/bin/bzserv-security-monitor surface
+  /home/bz/bin/bzserv-security-monitor auth
+  /home/bz/bin/bzserv-security-monitor firewall
+
+Reload visible terminal config
+  terminal-theme light       sync config and apply light colors
+  terminal-theme auto        sync config and pick theme by time
+  terminal-ai                from a normal shell outside Zellij
+  TERMINAL_AI_REFRESH=always terminal-ai
+  wezterm &
+
+Existing sessions
+  The Alt+F4 quit behavior applies to newly started sessions.
+  For an old ai session, run once:
+  zellij kill-session ai
+  terminal-ai
+
+Close one session from shell
+  zellij list-sessions
+  zellij kill-session ai
+  zellij kill-session main
+
+Detach without killing
+  Ctrl+g Ctrl+o d            detach from inside Zellij
+  zellij attach ai           return later
+
+WezTerm
+  Ctrl+Shift+F9        open maximized AI cockpit
+  Ctrl+Shift+F10       open maximized Codex-only session
+  Ctrl+Shift+F11       open maximized Claude-only session
+  Ctrl+Shift+F         search terminal output
+  Ctrl+Shift+PageUp    scroll page up
+  Ctrl+Shift+PageDown  scroll page down
+  Alt+Shift+V          paste latest screenshot path
+
+Theme switching
+  Run terminal-theme from a normal shell pane.
+  Restart Codex if its input box keeps old cached colors.
+
+Daily flow
+  1. Use Alt+h/j/k/l to move without mouse.
+  2. Use Ctrl+g Ctrl+p f for full-screen Codex/Claude.
+  3. Use Ctrl+g Ctrl+t 1/2/3/4/5 to jump tabs.
+  4. Use Ctrl+g Ctrl+o d before closing WezTerm.
+EOF

@@ -4,36 +4,32 @@ Personal terminal setup centered on `WezTerm + Zellij`, with an optional `tmux` 
 
 ## Contents
 
+### Linux native
 - `config/wezterm/wezterm.lua`: active WezTerm config
 - `config/zellij/config.kdl`: Zellij global config
-- `config/zellij/layouts/ai.kdl`: default AI cockpit with Codex, Claude, ops, LLM monitoring, security, and help tabs
-- `config/zellij/layouts/codex.kdl`: Codex tab layout
-- `config/zellij/layouts/claude.kdl`: Claude tab layout
-- `config/zellij/layouts/help.kdl`: shortcuts help tab layout
-- `config/zellij/layouts/llm.kdl`: bzserv LLM monitoring tab layout
-- `config/zellij/layouts/main.kdl`: legacy combined Codex/Claude layout
-- `config/zellij/layouts/sec.kdl`: bzserv security and attack-surface tab layout
-- `bin/bzserv-llm-monitor`: SSH-based GPU, service, and logs monitor for bzserv
-- `bin/bzserv-security-monitor`: SSH-based security and attack-surface monitor for bzserv
-- `bin/terminal-theme`: apply terminal templates across WezTerm, Zellij, and Codex together
-- `config/tmux/tmux.conf`: tmux config
-- `previews/terminal-theme-previews.png`: visual comparison of the three recommended terminal palettes
-- `previews/terminal-theme-night.svg`: Night template preview based on Catppuccin Mocha
-- `previews/terminal-theme-sunset.svg`: Sunset template preview based on a warm Gruvbox palette
-- `previews/terminal-theme-light-day.svg`: Light day template preview based on Gruvbox Light
-- `bin/zcodex`: open Codex layout/session
-- `bin/zclaude`: open Claude layout/session
-- `bin/zj`: attach/create a generic Zellij session
+- `config/zellij/layouts/*.kdl`: Zellij layout files (ai, codex, claude, help, llm, sec, main)
+- `bin/`: helper scripts for AI cockpit, monitoring, and session management
+- `config/tmux/tmux.conf`: tmux fallback config
+- `previews/`: SVG/PNG theme preview assets
+
+### Windows + WSL2 sub-project
+- `Win-WezTerm--Zellij-config/`: ported setup for Windows WezTerm (native) + WSL Ubuntu Zellij
+  - `wezterm.lua`: Windows-native WezTerm config launching WSL
+  - `install-wsl.sh`: deploys WSL configs + copies WezTerm config to Windows
+  - `sync-from-source.sh`: re-syncs common files from this repo into the sub-project
+
+
 
 ## Current Design
 
 - Gruvbox-style light day theme, with separate preview templates for night and sunset palettes
 - No dominant blue UI
-- WezTerm starts maximized
-- WezTerm starts in `zellij attach ai || zellij --session ai --new-session-with-layout ai`
+- WezTerm starts maximized and new cockpit windows opened by shortcuts are maximized
+- WezTerm starts through `terminal-ai`, which attaches to `ai` unless the installed layout/config changed
 - Zellij defaults to the `ai` layout
-- The `ai` layout has six tabs: `codex`, `claude`, `ops`, `llm`, `sec`, and `help`
-- Codex and Claude each get a large agent pane plus shell and git/status panes
+- Zellij quits the visible session on Alt+F4/window close instead of leaving a detached or resurrectable session
+- The `ai` layout has five tabs: `Agents`, `ops`, `llm`, `sec`, and `help`
+- Codex and Claude share the `Agents` tab
 - The `llm` tab monitors bzserv GPU, services, containers, Open WebUI logs, and Ollama logs
 - The `sec` tab monitors bzserv security services, SSH/auth events, listening ports, UFW, and fail2ban
 - The `help` tab shows the most useful Zellij and WezTerm shortcuts
@@ -53,16 +49,18 @@ Use `terminal-theme` when changing templates. It updates all layers that affect 
 - Codex TUI theme
 - Active Codex pane foreground/background, when a Zellij session is running
 
+`terminal-ai` avoids the usual stale-layout problem by keeping a checksum of the installed Zellij config, `ai` layout, help layout, and cockpit helper scripts. If those inputs change, it kills and recreates only the `ai` session. Other Zellij sessions are left alone.
+
 Apply the light day template:
 
 ```bash
 terminal-theme light
 ```
 
-If an already-running Codex process still has a cached dark input box, restart that Codex pane:
+If an already-running Codex process still has cached input colors, restart that Codex pane:
 
 ```bash
-codex resume --last -c 'tui.theme="gruvbox-light"'
+codex resume --last
 ```
 
 ## Theme Previews
@@ -97,14 +95,30 @@ cp config/zellij/layouts/help.kdl ~/.config/zellij/layouts/help.kdl
 cp config/zellij/layouts/llm.kdl ~/.config/zellij/layouts/llm.kdl
 cp config/zellij/layouts/main.kdl ~/.config/zellij/layouts/main.kdl
 cp config/tmux/tmux.conf ~/.tmux.conf
+cp bin/terminal-ai ~/bin/terminal-ai
 cp bin/terminal-theme ~/bin/terminal-theme
+cp bin/terminal-help ~/bin/terminal-help
 cp bin/zcodex ~/bin/zcodex
 cp bin/zclaude ~/bin/zclaude
 cp bin/zj ~/bin/zj
-chmod +x ~/bin/terminal-theme ~/bin/zcodex ~/bin/zclaude ~/bin/zj
+chmod +x ~/bin/terminal-ai ~/bin/terminal-theme ~/bin/terminal-help ~/bin/zcodex ~/bin/zclaude ~/bin/zj
 ```
 
 Make sure `~/bin` is in `PATH`.
+
+## Windows / WSL2 Setup
+
+For Windows + WSL2 Ubuntu, use the sub-project instead:
+
+```bash
+cd Win-WezTerm--Zellij-config
+../sync-from-source.sh   # re-sync if source changed
+./install-wsl.sh          # run inside WSL
+```
+
+See [`Win-WezTerm--Zellij-config/README.md`](Win-WezTerm--Zellij-config/README.md) for details.
+
+---
 
 ## Usage
 
@@ -112,6 +126,7 @@ In WezTerm:
 
 ```bash
 zellij attach ai
+terminal-ai
 zcodex
 zclaude
 ```

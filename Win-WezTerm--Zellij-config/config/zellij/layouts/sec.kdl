@@ -1,0 +1,23 @@
+layout cwd="/home/bz" {
+    pane split_direction="vertical" size="50%" {
+        pane split_direction="horizontal" {
+            pane name="security/access" command="bash" {
+                args "-lc" "/home/bz/bin/bzserv-security-monitor overview; exec bash -li"
+            }
+            pane name="attack surface" command="bash" {
+                args "-lc" "/home/bz/bin/bzserv-security-monitor surface; exec bash -li"
+            }
+        }
+        pane split_direction="horizontal" {
+            pane name="ssh/auth events" command="bash" {
+                args "-lc" "/home/bz/bin/bzserv-security-monitor auth; exec bash -li"
+            }
+            pane name="firewall/fail2ban" command="bash" {
+                args "-lc" "/home/bz/bin/bzserv-security-monitor firewall; exec bash -li"
+            }
+        }
+    }
+    pane size=1 borderless=true {
+        plugin location="compact-bar"
+    }
+}

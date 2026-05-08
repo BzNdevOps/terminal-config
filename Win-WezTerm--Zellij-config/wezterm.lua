@@ -2,10 +2,18 @@ local wezterm = require 'wezterm'
 local act = wezterm.action
 local mux = wezterm.mux
 
+-- Windows-native WezTerm config that hosts WSL Ubuntu.
+-- All Zellij / Codex / Claude tools run inside WSL.
+
 local home = wezterm.home_dir
-local ai_cmd = '/home/bz/bin/terminal-ai || exec bash -li'
-local codex_cmd = 'zellij attach codex || zellij --session codex --new-session-with-layout codex || exec bash -li'
-local claude_cmd = 'zellij attach claude || zellij --session claude --new-session-with-layout claude || exec bash -li'
+
+-- WSL default shell
+local wsl_shell = { 'wsl.exe', '~' }
+
+-- Commands executed inside WSL via bash -lc
+local ai_cmd = 'source ~/.bashrc 2>/dev/null; ~/bin/terminal-ai || exec bash -li'
+local codex_cmd = 'zellij attach codex 2>/dev/null || zellij --session codex --new-session-with-layout codex || exec bash -li'
+local claude_cmd = 'zellij attach claude 2>/dev/null || zellij --session claude --new-session-with-layout claude || exec bash -li'
 
 local function maximize_window(window)
   local gui_window = window:gui_window()
@@ -24,32 +32,11 @@ wezterm.on('gui-startup', function(cmd)
   maximize_window(window)
 end)
 
-local function spawn_maximized(args)
+local function spawn_wsl_maximized(args)
   return wezterm.action_callback(function()
     local _, _, window = mux.spawn_window { args = args }
     maximize_window(window)
   end)
-end
-
-local function paste_latest_screenshot(window, pane)
-  local success, stdout, stderr = wezterm.run_child_process {
-    'bash',
-    '-lc',
-    "latest=$(find \"$HOME/Pictures/Screenshots\" -maxdepth 1 -type f | sort | tail -n 1) && [ -n \"$latest\" ] && printf '%q' \"$latest\"",
-  }
-
-  if not success then
-    wezterm.log_error('latest screenshot failed: ' .. stderr)
-    return
-  end
-
-  local path = stdout:gsub('%s+$', '')
-  if path == '' then
-    wezterm.log_info('no screenshot found')
-    return
-  end
-
-  window:perform_action(act.SendString(path .. ' '), pane)
 end
 
 return {
@@ -90,30 +77,29 @@ return {
     CLAUDE_CODE_DISABLE_TERMINAL_TITLE = '1',
   },
   scrollback_lines = 100000,
-  default_prog = { 'bash', '-lc', ai_cmd },
+  default_prog = wsl_shell,
   launch_menu = {
     {
       label = 'AI cockpit',
-      args = { 'bash', '-lc', ai_cmd },
+      args = { 'wsl.exe', '~', '-e', 'bash', '-lc', ai_cmd },
     },
     {
       label = 'Codex only',
-      args = { 'bash', '-lc', codex_cmd },
+      args = { 'wsl.exe', '~', '-e', 'bash', '-lc', codex_cmd },
     },
     {
       label = 'Claude only',
-      args = { 'bash', '-lc', claude_cmd },
+      args = { 'wsl.exe', '~', '-e', 'bash', '-lc', claude_cmd },
     },
   },
   keys = {
-    { key = 'v', mods = 'ALT|SHIFT', action = wezterm.action_callback(paste_latest_screenshot) },
-    { key = 'F9', mods = 'CTRL|SHIFT', action = spawn_maximized { 'bash', '-lc', ai_cmd } },
-    { key = 'F10', mods = 'CTRL|SHIFT', action = spawn_maximized { 'bash', '-lc', codex_cmd } },
-    { key = 'F11', mods = 'CTRL|SHIFT', action = spawn_maximized { 'bash', '-lc', claude_cmd } },
-    { key = 'PageUp', mods = 'CTRL|SHIFT', action = act.ScrollByPage(-1) },
+    { key = 'F9',  mods = 'CTRL|SHIFT', action = spawn_wsl_maximized { 'wsl.exe', '~', '-e', 'bash', '-lc', ai_cmd } },
+    { key = 'F10', mods = 'CTRL|SHIFT', action = spawn_wsl_maximized { 'wsl.exe', '~', '-e', 'bash', '-lc', codex_cmd } },
+    { key = 'F11', mods = 'CTRL|SHIFT', action = spawn_wsl_maximized { 'wsl.exe', '~', '-e', 'bash', '-lc', claude_cmd } },
+    { key = 'PageUp',   mods = 'CTRL|SHIFT', action = act.ScrollByPage(-1) },
     { key = 'PageDown', mods = 'CTRL|SHIFT', action = act.ScrollByPage(1) },
-    { key = 'UpArrow', mods = 'CTRL|SHIFT', action = act.ScrollByLine(-3) },
-    { key = 'DownArrow', mods = 'CTRL|SHIFT', action = act.ScrollByLine(3) },
+    { key = 'UpArrow',  mods = 'CTRL|SHIFT', action = act.ScrollByLine(-3) },
+    { key = 'DownArrow',mods = 'CTRL|SHIFT', action = act.ScrollByLine(3) },
     { key = 'f', mods = 'CTRL|SHIFT', action = act.Search 'CurrentSelectionOrEmptyString' },
   },
 }

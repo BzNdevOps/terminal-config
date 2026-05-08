@@ -1,0 +1,247 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+target="${BZSERV_SSH_HOST:-bzserv}"
+mode="${1:-overview}"
+
+ssh_cmd() {
+    ssh -o BatchMode=yes -o ConnectTimeout=5 "$target" "$@"
+}
+
+case "$mode" in
+    overview)
+        while true; do
+            printf '\033c'
+            ssh -o BatchMode=yes -o ConnectTimeout=5 "$target" "sudo -n python3 -" <<'PY' || true
+import json
+import subprocess
+import time
+
+RESET = "\033[0m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+GREEN = "\033[38;5;82m"
+YELLOW = "\033[38;5;220m"
+RED = "\033[38;5;196m"
+CYAN = "\033[38;5;45m"
+
+def active(name):
+    try:
+        return subprocess.check_output(["systemctl", "is-active", name], text=True).strip()
+    except subprocess.CalledProcessError:
+        return "inactive"
+
+def line(name, state, warn=False):
+    color = GREEN if state == "active" and not warn else YELLOW if warn else RED
+    print(f"{color}●{RESET} {name:<18} {state}")
+
+print(f"{BOLD}{CYAN}◉ Security / Access{RESET}  {DIM}{time.strftime("%Y-%m-%d %H:%M:%S")}{RESET}")
+print()
+for svc in ["ufw", "fail2ban", "auditd", "unattended-upgrades", "tailscaled", "ssh", "nginx", "oracle-a1-launch"]:
+    line(svc, active(svc))
+
+try:
+    jail_status = subprocess.check_output(["fail2ban-client", "status", "sshd"], text=True, stderr=subprocess.DEVNULL)
+except Exception:
+    jail_status = ""
+banned = "0"
+failed = "0"
+for row in jail_status.splitlines():
+    if "Currently banned:" in row:
+        banned = row.split(":", 1)[1].strip()
+    if "Currently failed:" in row:
+        failed = row.split(":", 1)[1].strip()
+print()
+banned_color = GREEN if banned == "0" else RED
+failed_color = GREEN if failed == "0" else YELLOW
+print(f"{banned_color}●{RESET} fail2ban banned   {banned}")
+print(f"{failed_color}●{RESET} ssh failed now    {failed}")
+
+try:
+    ufw = subprocess.check_output(["ufw", "status"], text=True, stderr=subprocess.DEVNULL)
+    ufw_active = "Status: active" in ufw
+except Exception:
+    ufw_active = False
+print(f"{GREEN if ufw_active else RED}●{RESET} ufw active        {str(ufw_active).lower()}")
+
+try:
+    ts = subprocess.check_output(["tailscale", "status", "--json"], text=True, stderr=subprocess.DEVNULL)
+    ts_ok = json.loads(ts).get("BackendState") == "Running"
+except Exception:
+    ts_ok = False
+print(f"{GREEN if ts_ok else RED}●{RESET} tailscale online  {str(ts_ok).lower()}")
+PY
+            echo
+            printf '\033[1m\033[38;5;45m◉ vm1 integrity-check\033[0m\n\n'
+            ssh_cmd 'ssh -o BatchMode=yes -o ConnectTimeout=5 vm1 "
+result=\$(systemctl show integrity-check --property=Result --value 2>/dev/null)
+mono=\$(systemctl show integrity-check --property=ExecMainStartTimestampMonotonic --value 2>/dev/null)
+ts=\$(systemctl show integrity-check --property=StateChangeTimestamp --value 2>/dev/null)
+next=\$(systemctl list-timers integrity-check.timer --no-pager 2>/dev/null | grep integrity-check | awk '"'"'{print \$1, \$2, \$3}'"'"')
+if [ \"\$mono\" = \"0\" ] || [ -z \"\$mono\" ]; then
+    printf \"\033[38;5;220m●\033[0m integrity-check   never run (scheduled: \$next)\n\"
+elif [ \"\$result\" = \"success\" ]; then
+    printf \"\033[38;5;82m●\033[0m integrity-check   last OK   \$ts\n\"
+    [ -n \"\$next\" ] && printf \"\033[2m  next: \$next\033[0m\n\"
+else
+    printf \"\033[38;5;196m●\033[0m integrity-check   FAILED (\$result)   \$ts\n\"
+    [ -n \"\$next\" ] && printf \"\033[2m  next: \$next\033[0m\n\"
+fi
+" 2>/dev/null' || printf '\033[38;5;196m●\033[0m vm1 unreachable\n'
+            sleep 60
+        done
+        ;;
+    surface)
+        while true; do
+            printf '\033c'
+            ssh -o BatchMode=yes -o ConnectTimeout=5 "$target" "sudo -n python3 -" <<'PY' || true
+import subprocess
+import time
+
+RESET = "\033[0m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+GREEN = "\033[38;5;82m"
+YELLOW = "\033[38;5;220m"
+RED = "\033[38;5;196m"
+MAGENTA = "\033[38;5;207m"
+
+print(f"{BOLD}{MAGENTA}◉ Attack Surface{RESET}  {DIM}{time.strftime("%Y-%m-%d %H:%M:%S")}{RESET}")
+print()
+out = subprocess.check_output(["ss", "-tulpen"], text=True, stderr=subprocess.DEVNULL)
+rows = []
+for line in out.splitlines()[1:]:
+    parts = line.split()
+    if len(parts) < 5:
+        continue
+    proto = parts[0]
+    local = parts[4]
+    proc = line.split("users:(", 1)[1].split(")", 1)[0] if "users:(" in line else "-"
+    rows.append((proto, local, proc))
+
+WATCHED_PORTS = {"22", "443", "3000", "7788", "9000", "11434", "19999", "8080"}
+EXPECTED_PUBLIC = {"22"}
+
+issues = []
+for proto, local, proc in rows:
+    port = local.rsplit(":", 1)[-1]
+    if port not in WATCHED_PORTS:
+        continue
+    public = "0.0.0.0:" in local or "[::]:" in local
+    if not public:
+        continue
+    if port == "22":
+        issues.append((YELLOW, proto, local, proc, "SSH public"))
+    elif port not in EXPECTED_PUBLIC:
+        issues.append((RED, proto, local, proc, "unexpected public exposure"))
+    else:
+        issues.append((YELLOW, proto, local, proc, "public"))
+
+if issues:
+    for color, proto, local, proc, reason in issues:
+        print(f"{color}◆{RESET} {proto:<4} {local:<28} {proc[:28]}  {DIM}({reason}){RESET}")
+else:
+    print(f"{GREEN}● No unexpected public exposures{RESET}")
+PY
+            sleep 120
+        done
+        ;;
+    auth)
+        while true; do
+            printf '\033c'
+            ssh -o BatchMode=yes -o ConnectTimeout=5 "$target" "sudo -n python3 -" <<'PY' || true
+import subprocess
+import time
+
+RESET = "\033[0m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+GREEN = "\033[38;5;82m"
+YELLOW = "\033[38;5;220m"
+RED = "\033[38;5;196m"
+ORANGE = "\033[38;5;208m"
+
+print(f"{BOLD}{ORANGE}◉ SSH / Auth Events{RESET}  {DIM}{time.strftime("%Y-%m-%d %H:%M:%S")}{RESET}")
+print()
+cmd = ["journalctl", "_COMM=sshd", "--since", "24 hours ago", "--no-pager"]
+out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL)
+failed = [l for l in out.splitlines() if any(s in l.lower() for s in ["failed", "invalid", "authentication failure"])]
+accepted = [l for l in out.splitlines() if "Accepted " in l]
+print(f"{GREEN if not failed else RED}●{RESET} failed 24h      {len(failed)}")
+print(f"{GREEN}●{RESET} accepted 24h    {len(accepted)}")
+print()
+print(f"{BOLD}Recent events{RESET}")
+for line in (failed[-8:] + accepted[-6:])[-12:]:
+    color = RED if any(s in line.lower() for s in ["failed", "invalid", "authentication failure"]) else GREEN
+    print(f"{color}◆{RESET} {line[:110]}")
+PY
+            sleep 120
+        done
+        ;;
+    firewall)
+        while true; do
+            printf '\033c'
+            ssh -o BatchMode=yes -o ConnectTimeout=5 "$target" "sudo -n python3 -" <<'PY' || true
+import subprocess
+import time
+
+RESET = "\033[0m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+GREEN = "\033[38;5;82m"
+YELLOW = "\033[38;5;220m"
+RED = "\033[38;5;196m"
+
+ts = time.strftime("%Y-%m-%d %H:%M:%S")
+print(f"{BOLD}{RED}◉ Firewall / Fail2ban{RESET}  {DIM}{ts}{RESET}")
+print()
+
+issues = []
+
+try:
+    ufw_out = subprocess.check_output(["ufw", "status"], text=True, stderr=subprocess.DEVNULL)
+    if "Status: inactive" in ufw_out:
+        issues.append(f"{RED}● UFW INACTIVE — firewall is OFF{RESET}")
+except Exception as e:
+    issues.append(f"{RED}● ufw error: {e}{RESET}")
+
+try:
+    state = subprocess.check_output(["systemctl", "is-active", "fail2ban"], text=True).strip()
+    if state != "active":
+        issues.append(f"{RED}● fail2ban service {state}{RESET}")
+except Exception:
+    issues.append(f"{RED}● fail2ban service unknown{RESET}")
+
+try:
+    f2b = subprocess.check_output(["fail2ban-client", "status", "sshd"], text=True, stderr=subprocess.DEVNULL)
+    banned = "0"
+    failed = "0"
+    banned_ips = ""
+    for line in f2b.splitlines():
+        if "Currently banned:" in line:
+            banned = line.split(":", 1)[-1].strip()
+        if "Currently failed:" in line:
+            failed = line.split(":", 1)[-1].strip()
+        if "Banned IP list:" in line:
+            banned_ips = line.split(":", 1)[-1].strip()
+    if banned != "0":
+        issues.append(f"{RED}● fail2ban: {banned} banned — {banned_ips}{RESET}")
+    if failed != "0":
+        issues.append(f"{YELLOW}● fail2ban: {failed} currently failing{RESET}")
+except Exception as e:
+    issues.append(f"{RED}● fail2ban error: {e}{RESET}")
+
+if issues:
+    for issue in issues:
+        print(issue)
+else:
+    print(f"{GREEN}● Firewall OK — no issues detected{RESET}")
+PY
+            sleep 60
+        done
+        ;;
+    *)
+        echo "Usage: bzserv-security-monitor {overview|surface|auth|firewall}" >&2
+        exit 2
+        ;;
+esac
