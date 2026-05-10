@@ -36,7 +36,7 @@ pick_auto() {
 }
 
 copy_base_files() {
-    mkdir -p "$home_dir/.config/wezterm" "$home_dir/.config/zellij/layouts" "$home_dir/bin"
+    mkdir -p "$home_dir/.config/wezterm" "$home_dir/.config/zellij/layouts" "$home_dir/.codex/themes" "$home_dir/bin"
     cp "$repo_dir/config/wezterm/wezterm.lua"        "$home_dir/.config/wezterm/wezterm.lua"
     cp "$repo_dir/config/zellij/config.kdl"          "$home_dir/.config/zellij/config.kdl"
     cp "$repo_dir/config/zellij/layouts/ai.kdl"      "$home_dir/.config/zellij/layouts/ai.kdl"
@@ -46,6 +46,7 @@ copy_base_files() {
     cp "$repo_dir/config/zellij/layouts/llm.kdl"     "$home_dir/.config/zellij/layouts/llm.kdl"
     cp "$repo_dir/config/zellij/layouts/main.kdl"    "$home_dir/.config/zellij/layouts/main.kdl"
     cp "$repo_dir/config/zellij/layouts/sec.kdl"     "$home_dir/.config/zellij/layouts/sec.kdl"
+    cp "$repo_dir/config/codex/themes/gruvbox-light-darker.tmTheme" "$home_dir/.codex/themes/gruvbox-light-darker.tmTheme"
     cp -p "$repo_dir/bin/terminal-ai"                "$home_dir/bin/terminal-ai"
     cp -p "$repo_dir/bin/terminal-help"              "$home_dir/bin/terminal-help"
     chmod +x "$home_dir/bin/terminal-ai" "$home_dir/bin/terminal-help"
@@ -213,8 +214,8 @@ PYEOF
 apply_light() {
     copy_base_files
     # repo config files are the light baseline — no color patching needed
-    set_codex_theme gruvbox-light
-    echo "Applied: light (Gruvbox Light)"
+    set_codex_theme gruvbox-light-darker
+    echo "Applied: light (Gruvbox Light Darker)"
 }
 
 apply_night() {

@@ -20,10 +20,19 @@ layout_inputs=(
     "$config_file"
     "$layout_dir/layouts/$layout.kdl"
     "$layout_dir/layouts/help.kdl"
+    "$HOME/.codex/config.toml"
+    "$HOME/.pi/agent/settings.json"
+    "$HOME/.codex/themes/gruvbox-light-darker.tmTheme"
     "$HOME/bin/terminal-help"
     "$HOME/bin/bzserv-llm-monitor"
     "$HOME/bin/bzserv-security-monitor"
 )
+
+if [[ -d "$HOME/.pi/agent/themes" ]]; then
+    for path in "$HOME/.pi/agent/themes"/*.json; do
+        [[ -e "$path" ]] && layout_inputs+=("$path")
+    done
+fi
 
 current_hash() {
     local existing=()

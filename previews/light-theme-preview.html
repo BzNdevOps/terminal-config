@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Light Day Theme Preview</title>
+  <style>
+    :root {
+      --bg: #f2e5bc;
+      --fg: #3c3836;
+      --cursor-bg: #3c3836;
+      --cursor-fg: #fbf1c7;
+      --selection-bg: #fe8019;
+      --selection-fg: #ffffff;
+      --split: #d5c4a1;
+      --scroll: #d5c4a1;
+      --ansi-0: #fbf1c7;
+      --ansi-1: #cc241d;
+      --ansi-2: #98971a;
+      --ansi-3: #7a5c00;
+      --ansi-4: #004f6b;
+      --ansi-5: #b16286;
+      --ansi-6: #689d6a;
+      --ansi-7: #7c6f64;
+      --bright-0: #3c3836;
+      --bright-1: #9d0006;
+      --bright-2: #79740e;
+      --bright-3: #b38600;
+      --bright-4: #076678;
+      --bright-5: #8f3f71;
+      --bright-6: #427b58;
+      --bright-7: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #e9dfb6;
+      color: var(--fg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+      line-height: 1.45;
+    }
+    .wrap { max-width: 1440px; margin: 0 auto; padding: 28px; }
+    h1, h2 { margin: 0 0 12px; }
+    .subtitle { color: #665c54; margin-bottom: 22px; }
+    .grid { display: grid; gap: 18px; }
+    .cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card {
+      background: rgba(242, 229, 188, 0.95);
+      border: 1px solid #d5c4a1;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 8px 30px rgba(60,56,54,.08);
+    }
+    .card.dark {
+      background: #1d2021;
+      color: #ebdbb2;
+      border-color: #665c54;
+    }
+    .card.dark .muted { color: #d5c4a1; }
+    .muted { color: #665c54; }
+    .swatches { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .swatch { border-radius: 12px; padding: 12px; min-height: 82px; border: 1px solid rgba(0,0,0,.08); }
+    .swatch strong { display: block; font-size: 14px; margin-bottom: 6px; }
+    .swatch code { font-size: 12px; }
+    .terminal {
+      font-family: "JetBrains Mono", "Fira Code", ui-monospace, SFMono-Regular, Menlo, monospace;
+      background: var(--bg);
+      color: var(--fg);
+      border: 1px solid #d5c4a1;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; background: #f2e5bc; border-bottom: 1px solid #d5c4a1;
+    }
+    .dot { width: 12px; height: 12px; border-radius: 999px; }
+    .b1 { background: #cc241d; } .b2 { background: #98971a; } .b3 { background: #d79921; }
+    .pane { padding: 14px; }
+    .line { margin: 0 0 6px; }
+    .dim { color: #5f534a; font-style: italic; }
+    .sel { background: var(--selection-bg); color: var(--selection-fg); padding: 0 4px; border-radius: 4px; }
+    .cursor { background: var(--cursor-bg); color: var(--cursor-fg); padding: 0 4px; border-radius: 4px; }
+    .accent { color: var(--ansi-4); }
+    .err { color: var(--ansi-1); }
+    .card.dark .err { color: #fb4934; }
+    .ok { color: #4e9a06; font-weight: 700; }
+    .warn { color: #b57614; font-weight: 700; }
+    .info { color: #3d7c8a; font-weight: 700; }
+    .meta { color: #9d4f74; font-weight: 700; }
+    .cyan { color: #4f8a66; font-weight: 700; }
+    .bright-blue { color: var(--bright-4); }
+    .bright-red { color: var(--bright-1); }
+    .pill {
+      display: inline-block; padding: 2px 8px; border-radius: 999px;
+      margin: 2px 6px 2px 0; font-size: 13px; font-weight: 700;
+    }
+    table { width: 100%; border-collapse: collapse; font-family: "JetBrains Mono", monospace; }
+    td, th { border-bottom: 1px solid rgba(0,0,0,.08); padding: 9px 8px; text-align: left; }
+    .sample-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .row { display: grid; grid-template-columns: 180px 1fr; gap: 12px; align-items: center; margin-bottom: 10px; }
+    .label { font-weight: 700; }
+    .box { padding: 12px; border-radius: 12px; border: 1px solid #d5c4a1; background: #f2e5bc; }
+    .box.dark { background: #282828; color: #ebdbb2; border-color: #665c54; }
+    .small { font-size: 13px; }
+    .k { font-family: "JetBrains Mono", monospace; }
+    .footer { color: #665c54; margin-top: 12px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Light Day / Gruvbox Light — visualisation complète</h1>
+    <div class="subtitle">Vérifie le fond, le texte, le curseur, la sélection, les couleurs ANSI et les variantes bright.</div>
+
+    <div class="grid cols-2">
+      <section class="card">
+        <h2>1) Base theme</h2>
+        <div class="row"><div class="label">Foreground</div><div class="box"><span class="k">#3c3836</span> — texte principal</div></div>
+        <div class="row"><div class="label">Background</div><div class="box">Fond crème <span class="k">#f2e5bc</span></div></div>
+        <div class="row"><div class="label">Cursor</div><div class="box"><span class="cursor">curseur / texte inverse</span></div></div>
+        <div class="row"><div class="label">Selection</div><div class="box"><span class="sel">texte sélectionné</span> — doit rester très lisible</div></div>
+        <div class="row"><div class="label">Split / Scroll</div><div class="box"><span class="k">#d5c4a1</span> — séparateurs et scrollbar</div></div>
+      </section>
+
+      <section class="card">
+        <h2>2) Confort lecture</h2>
+        <p class="line" style="color:#1d2021">Ce paragraphe doit être lisible sans fatigue visuelle.</p>
+        <p class="line dim">Texte discret mais lisible : logs, chemins, métadonnées.</p>
+        <p class="line"><span class="err">ERREUR</span> <span class="ok">OK : services running</span> <span class="warn">WARN : low disk space</span> <span class="info">INFO</span> <span class="meta">META</span> <span class="cyan">DETAILS</span></p>
+        <p class="line">The quick brown fox jumps over the lazy dog.</p>
+        <p class="line"><span class="bright-blue">bright blue</span> et <span class="bright-red">bright red</span> doivent rester contrastés.</p>
+      </section>
+    </div>
+
+    <div class="grid cols-2" style="margin-top:18px;">
+      <section class="card dark">
+        <h2>3) Dark sample with same accents</h2>
+        <p class="line">Même palette d’accents sur fond sombre pour vérifier la cohérence.</p>
+        <p class="line"><span class="err">ERREUR</span> <span class="ok">OK : services running</span> <span class="warn">WARN : low disk space</span> <span class="info">INFO</span> <span class="meta">META</span> <span class="cyan">DETAILS</span></p>
+        <p class="line"><span class="sel">sélection</span> et <span class="cursor">curseur</span> visibles aussi sur fond sombre.</p>
+      </section>
+
+      <section class="card">
+        <h2>4) Selection comparison</h2>
+        <div class="grid cols-3">
+          <div class="box" style="background:#fe8019;color:#ffffff;border-color:#fe8019">
+            <strong>Orange</strong>
+            <p class="line"><span class="sel" style="background:#fe8019;color:#ffffff">texte sélectionné</span></p>
+            <p class="line small">Chaud, visible, très naturel pour Gruvbox.</p>
+          </div>
+          <div class="box" style="background:#458588;color:#fbf1c7;border-color:#458588">
+            <strong>Blue</strong>
+            <p class="line"><span class="sel" style="background:#458588;color:#fbf1c7">texte sélectionné</span></p>
+            <p class="line small">Plus froid, plus calme, moins agressif.</p>
+          </div>
+          <div class="box" style="background:#98971a;color:#fbf1c7;border-color:#98971a">
+            <strong>Green</strong>
+            <p class="line"><span class="sel" style="background:#98971a;color:#fbf1c7">texte sélectionné</span></p>
+            <p class="line small">Doux, mais moins contrasté sur fond crème.</p>
+          </div>
+        </div>
+        <p class="line" style="margin-top:14px;">Exemples : <span class="sel">git status sur la branche test-ai-cockpit-layout</span> · <span class="sel">zellij delete-session ai --force</span></p>
+      </section>
+    </div>
+
+    <section class="card" style="margin-top:18px;">
+      <h2>5) ANSI palette</h2>
+      <div class="swatches">
+        <div class="swatch" style="background:var(--ansi-0); color:var(--bright-0)"><strong>ansi 0 / bg-ish</strong><code>#f2e5bc</code></div>
+        <div class="swatch" style="background:var(--ansi-1); color:#fbf1c7"><strong>ansi 1 red</strong><code>#cc241d</code></div>
+        <div class="swatch" style="background:var(--ansi-2); color:#fbf1c7"><strong>ansi 2 green</strong><code>#98971a</code></div>
+        <div class="swatch" style="background:var(--ansi-3); color:#1d2021"><strong>ansi 3 yellow</strong><code>#7a5c00</code></div>
+        <div class="swatch" style="background:var(--ansi-4); color:#fbf1c7"><strong>ansi 4 blue</strong><code>#004f6b</code></div>
+        <div class="swatch" style="background:var(--ansi-5); color:#fbf1c7"><strong>ansi 5 magenta</strong><code>#b16286</code></div>
+        <div class="swatch" style="background:var(--ansi-6); color:#fbf1c7"><strong>ansi 6 cyan</strong><code>#689d6a</code></div>
+        <div class="swatch" style="background:var(--ansi-7); color:#fbf1c7"><strong>ansi 7 white-ish</strong><code>#7c6f64</code></div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:18px;">
+      <h2>6) Bright palette</h2>
+      <div class="swatches">
+        <div class="swatch" style="background:var(--bright-0); color:#fbf1c7"><strong>bright 0</strong><code>#3c3836</code></div>
+        <div class="swatch" style="background:var(--bright-1); color:#fbf1c7"><strong>bright 1</strong><code>#9d0006</code></div>
+        <div class="swatch" style="background:var(--bright-2); color:#fbf1c7"><strong>bright 2</strong><code>#79740e</code></div>
+        <div class="swatch" style="background:var(--bright-3); color:#1d2021"><strong>bright 3</strong><code>#b57614</code></div>
+        <div class="swatch" style="background:var(--bright-4); color:#fbf1c7"><strong>bright 4</strong><code>#076678</code></div>
+        <div class="swatch" style="background:var(--bright-5); color:#fbf1c7"><strong>bright 5</strong><code>#8f3f71</code></div>
+        <div class="swatch" style="background:var(--bright-6); color:#fbf1c7"><strong>bright 6</strong><code>#427b58</code></div>
+        <div class="swatch" style="background:var(--bright-7); color:#1d2021"><strong>bright 7</strong><code>#ffffff</code></div>
+      </div>
+    </section>
+
+    <section class="grid cols-3" style="margin-top:18px;">
+      <div class="card">
+        <h2>7) Message samples</h2>
+        <div class="terminal">
+          <div class="bar"><span class="dot b1"></span><span class="dot b2"></span><span class="dot b3"></span><span class="muted small">terminal sample</span></div>
+          <div class="pane">
+            <div class="line"><span class="info">INFO</span> build completed</div>
+            <div class="line"><span class="warn">WARN</span> low disk space</div>
+            <div class="line"><span class="err">ERROR</span> connection refused</div>
+            <div class="line"><span class="ok">OK</span> services running</div>
+            <div class="line">prompt <span class="cursor">█</span> selection <span class="sel">visible</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>8) Readability checklist</h2>
+        <p class="line">Tu dois pouvoir lire les lignes sans plisser les yeux.</p>
+        <p class="line">La sélection doit rester visible même sur du texte long.</p>
+        <p class="line">Les accents doivent distinguer erreurs, warnings et infos.</p>
+        <p class="line">Le fond ne doit pas être trop blanc.</p>
+        <p class="line">Le texte ne doit pas être trop pâle.</p>
+      </div>
+
+      <div class="card">
+        <h2>9) Verdict</h2>
+        <p class="line"><strong>Oui</strong> si tu lis confortablement ce panneau en journée.</p>
+        <p class="line"><strong>Non</strong> si tu préfères un fond blanc pur ou un contraste plus fort.</p>
+        <p class="footer">Light Day est pensé pour la lecture prolongée et la réduction de fatigue visuelle.</p>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

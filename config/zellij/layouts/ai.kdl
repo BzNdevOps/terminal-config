@@ -5,7 +5,7 @@ layout {
                 args "-lc" "cd /home/bz; /home/bz/.local/bin/claude || true; exec bash -li"
             }
             pane name="codex" command="bash" {
-                args "-lc" "cd /home/bz; /home/bz/.npm-global/bin/codex || true; exec bash -li"
+                args "-lc" "cd /home/bz; /home/bz/.npm-global/bin/codex -c 'tui.theme=\"gruvbox-light-darker\"' || true; exec bash -li"
             }
         }
         pane size=1 borderless=true {

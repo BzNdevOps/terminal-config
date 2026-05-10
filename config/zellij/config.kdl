@@ -9,16 +9,16 @@ theme "ai_gruvbox_day"
 
 themes {
     ai_gruvbox_day {
-        bg 251 241 199
+        bg 242 229 188
         fg 60 56 54
-        black 251 241 199
+        black 242 229 188
         red 204 36 29
-        green 152 151 26
-        yellow 215 153 33
-        blue 69 133 136
-        magenta 177 98 134
+        green 78 154 6
+        yellow 122 92 0
+        blue 0 79 107
+        magenta 157 79 116
         orange 175 58 3
-        cyan 0 107 139
-        white 60 56 54
+        cyan 79 138 102
+        white 95 83 74
     }
 }
