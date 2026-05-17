@@ -44,6 +44,7 @@ Ce script :
 - copie les `bin/` dans `~/bin`
 - remplace `/home/bz` par ton `$HOME` WSL
 - copie `wezterm.lua` dans `C:\Users\<Toi>\.config\wezterm\wezterm.lua` (Windows)
+- utilise les commandes compatibles Zellij `0.44.x` (`--new-session-with-layout` pour créer une session hors Zellij)
 
 ### 3. Lancer
 
@@ -53,6 +54,8 @@ Puis dans WSL :
 ```bash
 terminal-ai
 ```
+
+Zellij `0.44.x` note : hors session active, il ne faut pas lancer `zellij --session ai --layout ai`; cette forme peut afficher `There is no active session!`. Les wrappers fournis nettoient les variables `ZELLIJ*` périmées et utilisent `--new-session-with-layout` quand ils créent une nouvelle session.
 
 ---
 
@@ -97,3 +100,10 @@ Puis `install-wsl.sh` redéploie.
 | `Ctrl + Shift + F11` | Ouvre une session Claude seul |
 | `Ctrl + Shift + Flèches` | Scroll |
 | `Ctrl + Shift + F` | Recherche dans le terminal |
+
+## Souris et sélection
+
+- Clic souris dans Zellij : change de pane normalement (`mouse_mode true`).
+- Sélection de texte : maintiens `Shift` et glisse la souris pour laisser WezTerm sélectionner.
+- La sélection WezTerm utilise le highlight orange Sunset.
+- Dans Zellij, `Alt+c` copie une sélection conservée.

@@ -36,7 +36,7 @@ pick_auto() {
 }
 
 copy_base_files() {
-    mkdir -p "$home_dir/.config/wezterm" "$home_dir/.config/zellij/layouts" "$home_dir/bin"
+    mkdir -p "$home_dir/.config/wezterm" "$home_dir/.config/zellij/layouts" "$home_dir/.codex/themes" "$home_dir/bin"
     cp "$repo_dir/config/wezterm/wezterm.lua"        "$home_dir/.config/wezterm/wezterm.lua"
     cp "$repo_dir/config/zellij/config.kdl"          "$home_dir/.config/zellij/config.kdl"
     cp "$repo_dir/config/zellij/layouts/ai.kdl"      "$home_dir/.config/zellij/layouts/ai.kdl"
@@ -46,6 +46,7 @@ copy_base_files() {
     cp "$repo_dir/config/zellij/layouts/llm.kdl"     "$home_dir/.config/zellij/layouts/llm.kdl"
     cp "$repo_dir/config/zellij/layouts/main.kdl"    "$home_dir/.config/zellij/layouts/main.kdl"
     cp "$repo_dir/config/zellij/layouts/sec.kdl"     "$home_dir/.config/zellij/layouts/sec.kdl"
+    cp "$repo_dir/config/codex/themes/gruvbox-light-darker.tmTheme" "$home_dir/.codex/themes/gruvbox-light-darker.tmTheme"
     cp -p "$repo_dir/bin/terminal-ai"                "$home_dir/bin/terminal-ai"
     cp -p "$repo_dir/bin/terminal-help"              "$home_dir/bin/terminal-help"
     chmod +x "$home_dir/bin/terminal-ai" "$home_dir/bin/terminal-help"
@@ -59,6 +60,20 @@ path  = sys.argv[1]
 theme = sys.argv[2]
 
 COLORS = {
+    'light': """\
+  colors = {
+    foreground = '#3c3836',
+    background = '#f2e5bc',
+    cursor_bg = '#3c3836',
+    cursor_fg = '#f2e5bc',
+    cursor_border = '#3c3836',
+    selection_fg = '#1d2021',
+    selection_bg = '#fabd2f',
+    scrollbar_thumb = '#d5c4a1',
+    split = '#d5c4a1',
+    ansi = { '#f2e5bc', '#cc241d', '#4e9a06', '#7a5c00', '#004f6b', '#9d4f74', '#4f8a66', '#5f534a' },
+    brights = { '#3c3836', '#fb4934', '#8ec07c', '#b38600', '#2f7a8a', '#d3869b', '#83a598', '#ffffff' },
+  },""",
     'night': """\
   colors = {
     foreground = '#cdd6f4',
@@ -75,17 +90,17 @@ COLORS = {
   },""",
     'sunset': """\
   colors = {
-    foreground = '#ebdbb2',
-    background = '#282828',
-    cursor_bg = '#ebdbb2',
-    cursor_fg = '#282828',
-    cursor_border = '#ebdbb2',
-    selection_fg = '#1d2021',
-    selection_bg = '#fabd2f',
-    scrollbar_thumb = '#504945',
-    split = '#504945',
-    ansi = { '#282828', '#cc241d', '#98971a', '#d79921', '#458588', '#b16286', '#689d6a', '#a89984' },
-    brights = { '#928374', '#fb4934', '#b8bb26', '#fabd2f', '#83a598', '#d3869b', '#8ec07c', '#ebdbb2' },
+    foreground = '#ffecd2',
+    background = '#1e1428',
+    cursor_bg = '#ff9a3c',
+    cursor_fg = '#1e1428',
+    cursor_border = '#ff9a3c',
+    selection_fg = '#1e1428',
+    selection_bg = '#ff9a3c',
+    scrollbar_thumb = '#3d2b5e',
+    split = '#ff9a3c',
+    ansi = { '#1e1428', '#ff4d6d', '#80ffdb', '#ffd166', '#48cae4', '#c77dff', '#ff9a3c', '#ffecd2' },
+    brights = { '#3d2b5e', '#ff6b9d', '#a0ffd6', '#ffe699', '#72d9f5', '#d9a0ff', '#ffb86c', '#ffffff' },
   },""",
 }
 
@@ -151,6 +166,49 @@ themes {
         white 60 56 54
     }
 }""",
+    'sunset': """\
+themes {
+    sunset {
+        fg      255 236 210
+        bg      30 20 40
+        black   30 20 40
+        red     255 77 109
+        green   128 255 219
+        yellow  255 209 102
+        blue    72 202 228
+        magenta 199 125 255
+        orange  255 154 60
+        cyan    255 154 60
+        white   255 236 210
+
+        text_selected {
+            base        30 20 40
+            background  255 154 60
+            emphasis_0  30 20 40
+            emphasis_1  61 43 94
+            emphasis_2  30 20 40
+            emphasis_3  61 43 94
+        }
+
+        table_cell_selected {
+            base        30 20 40
+            background  255 154 60
+            emphasis_0  30 20 40
+            emphasis_1  61 43 94
+            emphasis_2  30 20 40
+            emphasis_3  61 43 94
+        }
+
+        list_selected {
+            base        30 20 40
+            background  255 154 60
+            emphasis_0  30 20 40
+            emphasis_1  61 43 94
+            emphasis_2  30 20 40
+            emphasis_3  61 43 94
+        }
+    }
+}""",
 }
 
 text = open(path).read()
@@ -212,9 +270,10 @@ PYEOF
 
 apply_light() {
     copy_base_files
-    # repo config files are the light baseline — no color patching needed
-    set_codex_theme gruvbox-light
-    echo "Applied: light (Gruvbox Light)"
+    patch_wezterm_colors light
+    patch_zellij_theme ai_gruvbox_day
+    set_codex_theme gruvbox-light-darker
+    echo "Applied: light (Gruvbox Light Darker)"
 }
 
 apply_night() {
@@ -228,9 +287,9 @@ apply_night() {
 apply_sunset() {
     copy_base_files
     patch_wezterm_colors sunset
-    patch_zellij_theme ai_gruvbox_warm
+    patch_zellij_theme sunset
     set_codex_theme gruvbox-dark
-    echo "Applied: sunset (Gruvbox Dark)"
+    echo "Applied: sunset"
 }
 
 case "$theme" in

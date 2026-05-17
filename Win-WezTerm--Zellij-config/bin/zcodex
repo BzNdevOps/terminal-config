@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if [ -n "${ZELLIJ:-}" ]; then
-    exec zellij action new-tab --layout codex --name codex
-else
-    exec zellij attach -c codex
+if [ -z "${ZELLIJ_SESSION_NAME:-}" ]; then
+    unset ZELLIJ ZELLIJ_PANE_ID ZELLIJ_SOCKET_DIR
+    exec zellij --session codex --new-session-with-layout codex
 fi
+
+exec zellij --layout codex

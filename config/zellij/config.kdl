@@ -2,23 +2,61 @@ default_layout "ai"
 default_mode "locked"
 on_force_close "quit"
 scroll_buffer_size 50000
-copy_on_select true
+copy_on_select false
+mouse_mode true
 session_serialization false
 pane_frames true
-theme "ai_gruvbox_day"
+theme "sunset"
 
 themes {
-    ai_gruvbox_day {
-        bg 242 229 188
-        fg 60 56 54
-        black 242 229 188
-        red 204 36 29
-        green 78 154 6
-        yellow 122 92 0
-        blue 0 79 107
-        magenta 157 79 116
-        orange 175 58 3
-        cyan 79 138 102
-        white 95 83 74
+    sunset {
+        fg      255 236 210
+        bg      30 20 40
+        black   30 20 40
+        red     255 77 109
+        green   128 255 219
+        yellow  255 209 102
+        blue    72 202 228
+        magenta 199 125 255
+        orange  255 154 60
+        cyan    255 154 60
+        white   255 236 210
+
+        text_selected {
+            base        30 20 40
+            background  255 154 60
+            emphasis_0  30 20 40
+            emphasis_1  61 43 94
+            emphasis_2  30 20 40
+            emphasis_3  61 43 94
+        }
+
+        table_cell_selected {
+            base        30 20 40
+            background  255 154 60
+            emphasis_0  30 20 40
+            emphasis_1  61 43 94
+            emphasis_2  30 20 40
+            emphasis_3  61 43 94
+        }
+
+        list_selected {
+            base        30 20 40
+            background  255 154 60
+            emphasis_0  30 20 40
+            emphasis_1  61 43 94
+            emphasis_2  30 20 40
+            emphasis_3  61 43 94
+        }
+    }
+}
+
+keybinds {
+    normal {
+        bind "Alt c" { Copy; }
+    }
+
+    scroll {
+        bind "Alt c" { Copy; }
     }
 }

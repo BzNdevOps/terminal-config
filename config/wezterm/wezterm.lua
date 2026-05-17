@@ -3,9 +3,10 @@ local act = wezterm.action
 local mux = wezterm.mux
 
 local home = wezterm.home_dir
-local ai_cmd = '/home/bz/bin/terminal-ai || exec bash -li'
-local codex_cmd = 'zellij attach codex || zellij --session codex --new-session-with-layout codex || exec bash -li'
-local claude_cmd = 'zellij attach claude || zellij --session claude --new-session-with-layout claude || exec bash -li'
+local clear_zellij_env = 'unset ZELLIJ ZELLIJ_SESSION_NAME ZELLIJ_PANE_ID ZELLIJ_SOCKET_DIR'
+local ai_cmd = 'cd ' .. home .. '; ' .. clear_zellij_env .. '; ' .. home .. '/bin/terminal-ai || exec bash -li'
+local codex_cmd = 'cd ' .. home .. '; ' .. clear_zellij_env .. '; zellij --session codex --new-session-with-layout codex || exec bash -li'
+local claude_cmd = 'cd ' .. home .. '; ' .. clear_zellij_env .. '; zellij --session claude --new-session-with-layout claude || exec bash -li'
 
 local function maximize_window(window)
   local gui_window = window:gui_window()
@@ -55,17 +56,17 @@ end
 return {
   default_cwd = home,
   colors = {
-    foreground = '#3c3836',
-    background = '#f2e5bc',
-    cursor_bg = '#3c3836',
-    cursor_fg = '#f2e5bc',
-    cursor_border = '#3c3836',
-    selection_fg = '#ffffff',
-    selection_bg = '#fabd2f',
-    scrollbar_thumb = '#d5c4a1',
-    split = '#d5c4a1',
-    ansi = { '#f2e5bc', '#cc241d', '#4e9a06', '#7a5c00', '#004f6b', '#9d4f74', '#4f8a66', '#5f534a' },
-    brights = { '#3c3836', '#fb4934', '#8ec07c', '#b38600', '#2f7a8a', '#d3869b', '#83a598', '#ffffff' },
+    foreground = '#ffecd2',
+    background = '#1e1428',
+    cursor_bg = '#ff9a3c',
+    cursor_fg = '#1e1428',
+    cursor_border = '#ff9a3c',
+    selection_fg = '#1e1428',
+    selection_bg = '#ff9a3c',
+    scrollbar_thumb = '#3d2b5e',
+    split = '#ff9a3c',
+    ansi = { '#1e1428', '#ff4d6d', '#80ffdb', '#ffd166', '#48cae4', '#c77dff', '#ff9a3c', '#ffecd2' },
+    brights = { '#3d2b5e', '#ff6b9d', '#a0ffd6', '#ffe699', '#72d9f5', '#d9a0ff', '#ffb86c', '#ffffff' },
   },
   font_size = 13.0,
   line_height = 1.08,

@@ -11,9 +11,10 @@ local home = wezterm.home_dir
 local wsl_shell = { 'wsl.exe', '~' }
 
 -- Commands executed inside WSL via bash -lc
-local ai_cmd = 'source ~/.bashrc 2>/dev/null; ~/bin/terminal-ai || exec bash -li'
-local codex_cmd = 'zellij attach codex 2>/dev/null || zellij --session codex --new-session-with-layout codex || exec bash -li'
-local claude_cmd = 'zellij attach claude 2>/dev/null || zellij --session claude --new-session-with-layout claude || exec bash -li'
+local clear_zellij_env = 'unset ZELLIJ ZELLIJ_SESSION_NAME ZELLIJ_PANE_ID ZELLIJ_SOCKET_DIR'
+local ai_cmd = 'cd ~; source ~/.bashrc 2>/dev/null; ' .. clear_zellij_env .. '; ~/bin/terminal-ai || exec bash -li'
+local codex_cmd = 'cd ~; source ~/.bashrc 2>/dev/null; ' .. clear_zellij_env .. '; zellij --session codex --new-session-with-layout codex || exec bash -li'
+local claude_cmd = 'cd ~; source ~/.bashrc 2>/dev/null; ' .. clear_zellij_env .. '; zellij --session claude --new-session-with-layout claude || exec bash -li'
 
 local function maximize_window(window)
   local gui_window = window:gui_window()
@@ -42,17 +43,17 @@ end
 return {
   default_cwd = home,
   colors = {
-    foreground = '#3c3836',
-    background = '#fbf1c7',
-    cursor_bg = '#3c3836',
-    cursor_fg = '#fbf1c7',
-    cursor_border = '#3c3836',
-    selection_fg = '#1d2021',
-    selection_bg = '#fabd2f',
-    scrollbar_thumb = '#d5c4a1',
-    split = '#d5c4a1',
-    ansi = { '#fbf1c7', '#cc241d', '#98971a', '#d79921', '#458588', '#b16286', '#689d6a', '#d5c4a1' },
-    brights = { '#3c3836', '#9d0006', '#79740e', '#b57614', '#458588', '#b16286', '#689d6a', '#ffffff' },
+    foreground = '#ffecd2',
+    background = '#1e1428',
+    cursor_bg = '#ff9a3c',
+    cursor_fg = '#1e1428',
+    cursor_border = '#ff9a3c',
+    selection_fg = '#1e1428',
+    selection_bg = '#ff9a3c',
+    scrollbar_thumb = '#3d2b5e',
+    split = '#ff9a3c',
+    ansi = { '#1e1428', '#ff4d6d', '#80ffdb', '#ffd166', '#48cae4', '#c77dff', '#ff9a3c', '#ffecd2' },
+    brights = { '#3d2b5e', '#ff6b9d', '#a0ffd6', '#ffe699', '#72d9f5', '#d9a0ff', '#ffb86c', '#ffffff' },
   },
   font_size = 13.0,
   line_height = 1.08,

@@ -7,11 +7,13 @@ cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/terminal-config"
 stamp="$cache_dir/${session}.layout.sha256"
 refresh="${TERMINAL_AI_REFRESH:-auto}"
 
-if [[ -n "${ZELLIJ:-}" ]]; then
+if [[ -n "${ZELLIJ_SESSION_NAME:-}" ]]; then
     echo "terminal-ai: detach first, then run this from a normal shell outside Zellij" >&2
     echo "terminal-ai: use Ctrl+g Ctrl+o d, then run: terminal-ai" >&2
     exit 2
 fi
+
+unset ZELLIJ ZELLIJ_PANE_ID ZELLIJ_SOCKET_DIR
 
 layout_dir="${ZELLIJ_CONFIG_DIR:-$HOME/.config/zellij}"
 config_file="${ZELLIJ_CONFIG_FILE:-$layout_dir/config.kdl}"
@@ -66,7 +68,7 @@ previous_hash="$(cat "$stamp" 2>/dev/null || true)"
 if session_exists; then
     case "$refresh" in
         never)
-            exec zellij attach "$session"
+            exec zellij attach "$session" 2>/dev/null
             ;;
         always)
             zellij kill-session "$session" >/dev/null 2>&1 || true
@@ -74,7 +76,7 @@ if session_exists; then
             ;;
         auto)
             if [[ "$previous_hash" == "$hash" ]]; then
-                exec zellij attach "$session"
+                exec zellij attach "$session" 2>/dev/null
             fi
 
             printf 'terminal-ai: refreshing stale %s session only\n' "$session" >&2

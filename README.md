@@ -22,10 +22,12 @@ Personal terminal setup centered on `WezTerm + Zellij`, with an optional `tmux` 
 
 ## Current Design
 
-- Gruvbox-style light day theme, with separate preview templates for night and sunset palettes
+- Sunset theme by default across WezTerm and Zellij
 - No dominant blue UI
 - WezTerm starts maximized and new cockpit windows opened by shortcuts are maximized
 - WezTerm starts through `terminal-ai`, which attaches to `ai` unless the installed layout/config changed
+- Zellij 0.44.x startup uses `--new-session-with-layout` when creating sessions from outside Zellij
+- Startup wrappers clear stale `ZELLIJ*` environment variables before creating a new session, avoiding `There is no active session!`
 - Zellij defaults to the `ai` layout
 - Zellij quits the visible session on Alt+F4/window close instead of leaving a detached or resurrectable session
 - The `ai` layout has five tabs: `Agents`, `ops`, `llm`, `sec`, and `help`
@@ -39,6 +41,7 @@ Personal terminal setup centered on `WezTerm + Zellij`, with an optional `tmux` 
 - `Alt+Shift+v` pastes the path of the latest screenshot from `~/Pictures/Screenshots`
 - `zcodex` opens a Codex tab/layout when inside Zellij, or starts a dedicated Codex session otherwise
 - `zclaude` does the same for Claude
+- Mouse pane switching is enabled in Zellij; use `Shift + drag` to select terminal text with WezTerm's orange selection highlight
 
 ## Theme Switching
 
@@ -50,6 +53,14 @@ Use `terminal-theme` when changing templates. It updates all layers that affect 
 - Active Codex pane foreground/background, when a Zellij session is running
 
 `terminal-ai` avoids the usual stale-layout problem by keeping a checksum of the installed Zellij config, `ai` layout, help layout, and cockpit helper scripts. If those inputs change, it kills and recreates only the `ai` session. Other Zellij sessions are left alone.
+
+For Zellij 0.44.x and newer, creating a session from outside Zellij must use `--new-session-with-layout`. Using `--layout` with `--session` outside an active Zellij session can print:
+
+```text
+There is no active session!
+```
+
+The bundled `terminal-ai`, `zcodex`, `zclaude`, and WezTerm launch commands handle this automatically.
 
 Apply the light day template:
 
@@ -131,6 +142,13 @@ zcodex
 zclaude
 ```
 
+Text selection:
+
+- click panes normally to focus them
+- hold `Shift` while dragging to let WezTerm select text
+- selected text uses the orange Sunset highlight
+- copy retained Zellij selections with `Alt+c`
+
 Generic session attach/create:
 
 ```bash
@@ -144,4 +162,4 @@ zj infra
 - The bundled `ai.kdl`, `codex.kdl`, and `claude.kdl` currently use user-specific binary paths:
   - `/home/bz/.npm-global/bin/codex`
   - `/home/bz/.local/bin/claude`
-- If you use different install paths, update those layout files.
+- If you use different install paths, update those layout files or run the Windows/WSL installer, which rewrites `/home/bz` to the current `$HOME`.
