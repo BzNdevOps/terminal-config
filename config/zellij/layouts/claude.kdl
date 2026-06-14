@@ -4,7 +4,9 @@ layout {
             args "-lc" "/home/bz/.local/bin/claude || true; exec bash -li"
         }
         pane split_direction="horizontal" {
-            pane
+            pane command="bash" {
+                args "-lc" "ssh -t bzserv '~/Projects/tmux-agent-human-tests/scripts/watch-auto.sh' || exec bash -li"
+            }
             pane
         }
     }
