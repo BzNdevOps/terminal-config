@@ -1,16 +1,32 @@
-layout cwd="/home/bz" {
-    pane split_direction="vertical" size="72%" {
-        pane name="claude" command="bash" {
-            args "-lc" "cd /home/bz; /home/bz/.local/bin/claude || true; exec bash -li"
-        }
-        pane split_direction="horizontal" {
-            pane name="shell"
-            pane name="git" command="bash" {
-                args "-lc" "while true; do clear; git status --short --branch 2>/dev/null || true; printf '\\n'; date; sleep 10; done"
+layout {
+    tab name="Claude" focus=true cwd="/home/bz" {
+        pane split_direction="vertical" size="72%" {
+            pane name="claude" command="bash" {
+                args "-lc" "cd /home/bz; /home/bz/.local/bin/claude || true; exec bash -li"
+            }
+            pane split_direction="horizontal" {
+                pane name="shell"
+                pane name="git" command="bash" {
+                    args "-lc" "while true; do clear; git status --short --branch 2>/dev/null || true; printf '\\n'; date; sleep 10; done"
+                }
             }
         }
+        pane size=1 borderless=true {
+            plugin location="compact-bar"
+        }
     }
-    pane size=1 borderless=true {
-        plugin location="compact-bar"
+
+    tab name="E2E" cwd="/home/bz" {
+        pane split_direction="vertical" {
+            pane name="e2e-runner" command="bash" {
+                args "-lc" "ssh -t bzserv 'exec bash -li'"
+            }
+            pane name="e2e-watcher" command="bash" {
+                args "-lc" "ssh -t bzserv '~/Projects/tmux-agent-human-tests/scripts/watch-auto.sh'; exec bash -li"
+            }
+        }
+        pane size=1 borderless=true {
+            plugin location="compact-bar"
+        }
     }
 }
